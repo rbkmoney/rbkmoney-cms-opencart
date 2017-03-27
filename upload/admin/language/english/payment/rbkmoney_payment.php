@@ -1,0 +1,57 @@
+<?php
+// Heading
+$_['heading_title'] = 'RBKmoney';
+$_['text_edit'] = 'Edit RBKmoney';
+
+
+// Text
+$_['text_payment'] = 'Payment';
+$_['text_success'] = 'Settings module updated';
+$_['text_rbkmoney_payment'] = '<a href="https://rbk.money" onclick="return !window.open(this.href)"> <img src = "view/image/payment/rbkmoney_payment.png" alt="RBKmoney" title="RBKmoney" style="border: 1px solid #EEEEEE;" /> </a>';
+
+
+// Common settings
+$_['entry_status'] = 'Status:';
+$_['help_status'] = 'Status';
+
+$_['entry_sort_order'] = 'Sort order:';
+$_['help_sort_order'] = 'Sort order';
+
+
+// RBKmoney settings
+$_['entry_shop_id'] = 'Shop ID:';
+$_['help_shop_id'] = 'Number of the merchant\'s shop system RBKmoney';
+$_['error_shop_id'] = 'Shop ID is required';
+
+$_['entry_order_status'] = 'Order status after the payment';
+$_['help_order_status'] = 'Order status after the payment.';
+
+$_['entry_order_status_progress'] = 'Order Status after invoicing:';
+$_['help_order_status_progress'] = 'Order Status after invoicing.';
+
+$_['entry_form_path_logo'] = 'Logo in payment form:';
+$_['help_form_path_logo'] = 'Your logo for payment form';
+
+$_['entry_form_company_name'] = 'Company name in payment form:';
+$_['help_form_company_name'] = 'Your company name for payment form';
+
+$_['entry_private_key'] = 'Private key:';
+$_['help_private_key'] = 'The private key in the system RBK Money.';
+$_['error_private_key'] = 'Private key is required';
+
+$_['entry_callback_public_key'] = 'Callback public key:';
+$_['help_callback_public_key'] = 'Callback public key';
+$_['error_callback_public_key'] = 'Callback public key is required';
+
+$_['entry_currency'] = 'Currency:';
+$_['help_currency'] = 'Currency (ISO 4217)';
+$_['error_currency'] = 'Currency is required';
+
+$_['entry_notify_url'] = 'Notification URL:';
+$_['help_notify_url'] = 'This address is to be inserted in a private office RBK Money';
+
+
+// Common error
+$_['error_permission'] = 'You are not allowed to control this unit';
+
+?>
