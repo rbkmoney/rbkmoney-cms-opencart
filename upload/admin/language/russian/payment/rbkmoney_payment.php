@@ -8,6 +8,8 @@ $_['text_edit'] = 'Редактирование RBKmoney';
 $_['text_payment'] = 'Оплата';
 $_['text_success'] = 'Настройки модуля обновлены!';
 $_['text_rbkmoney_payment'] = '<a href="https://rbk.money" onclick="return !window.open(this.href)"> <img src = "view/image/payment/rbkmoney_payment.png" alt="RBKmoney" title="RBKmoney" style="border: 1px solid #EEEEEE;" /> </a>';
+$_['text_yes'] = 'Да';
+$_['text_no'] = 'Нет';
 
 
 // Common settings
@@ -16,6 +18,9 @@ $_['help_status'] = 'Статус';
 
 $_['entry_sort_order'] = 'Sort order:';
 $_['help_sort_order'] = 'Sort order';
+
+$_['entry_geo_zone'] = 'Географическая зона';
+$_['help_geo_zone'] = 'Географическая зона';
 
 
 // RBKmoney settings
@@ -50,6 +55,7 @@ $_['error_currency'] = 'Валюта обязательна';
 $_['entry_notify_url'] = 'URL для оповещения о платеже:';
 $_['help_notify_url'] = 'Этот адрес необходимо будет добавить в настройках личного кабинета в системе RBKmoney';
 
+$_['entry_logs'] = 'Включить логи';
 
 // Common error
 $_['error_permission'] = 'У Вас нет прав для управления этим модулем!';

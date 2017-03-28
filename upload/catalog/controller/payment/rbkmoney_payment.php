@@ -52,9 +52,13 @@ class ControllerPaymentRbkmoneyPayment extends Controller
             if(!$rbkmoney_payment_order) {
                 $response_create_invoice = $this->model_payment_rbkmoney_payment->create_invoice($order_info);
                 $create_invoice_encode = json_decode($response_create_invoice['body'], true);
-                $invoiceId = !empty($create_invoice_encode['id']) ? $create_invoice_encode['id'] : '';
+                if(isset($create_invoice_encode['id']) && !empty($invoiceId = $create_invoice_encode['id'])) {
+                    $invoiceId = $create_invoice_encode['id'];
+                    $this->model_payment_rbkmoney_payment->addInvoice($invoiceId, $this->session->data['order_id']);
+                } else {
+                    throw new Exception("Invoice ID not created");
+                }
 
-                $this->model_payment_rbkmoney_payment->addInvoice($invoiceId, $this->session->data['order_id']);
             } else {
                 $invoiceId = $rbkmoney_payment_order['invoice_id'];
             }
@@ -66,16 +70,16 @@ class ControllerPaymentRbkmoneyPayment extends Controller
             $data['invoice_id'] = $invoiceId;
             $data['invoice_access_token'] = $invoice_access_token;
         } catch (Exception $ex) {
+            $logs = array();
             $logs['error'] = array(
                 'code' => 'error',
                 'message' => $ex->getMessage(),
             );
-            $this->model_payment_rbkmoney_payment->logger('Exception', $logs);
+            $this->model_payment_rbkmoney_payment->logger('exception', $logs);
         }
 
         $data['invoice_id'] = $invoiceId;
         $data['invoice_access_token'] = $invoice_access_token;
-
 
         return $this->load->view('payment/rbkmoney_payment', $data);
     }

@@ -196,9 +196,7 @@
                                 <select name="rbkmoney_payment_order_status_id" id="rbkmoney_payment_order_status_id" class="form-control">
                                     <?php foreach ($order_statuses as $order_status) { ?>
                                     <?php if ($order_status['order_status_id'] == $rbkmoney_payment_order_status_id) { ?>
-                                    <option value="<?php echo $order_status['order_status_id']; ?>" selected="selected">
-                                        <?php echo $order_status['name']; ?>
-                                    </option>
+                                    <option value="<?php echo $order_status['order_status_id']; ?>" selected="selected"><?php echo $order_status['name']; ?></option>
                                     <?php } else { ?>
                                     <option value="<?php echo $order_status['order_status_id']; ?>">
                                         <?php echo $order_status['name']; ?>
@@ -230,6 +228,58 @@
                                     <?php } ?>
                                     <?php } ?>
                                 </select>
+                            </div>
+                        </div>
+
+                        <!-- Geo zone -->
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label" for="rbkmoney_payment_geo_zone_id">
+                                <span data-toggle="tooltip" title="<?php echo $help_rbkmoney_payment_geo_zone_id; ?>">
+                                    <?php echo $entry_rbkmoney_payment_geo_zone_id; ?>
+                                </span>
+                            </label>
+                            <div class="col-sm-10">
+                                <select name="rbkmoney_payment_geo_zone_id" id="rbkmoney_payment_geo_zone_id" class="form-control">
+                                    <option value="0"><?php echo $text_all_zones; ?></option>
+                                    <?php foreach ($geo_zones as $geo_zone) { ?>
+                                    <?php if ($geo_zone['geo_zone_id'] == $rbkmoney_payment_geo_zone_id) { ?>
+                                    <option value="<?php echo $geo_zone['geo_zone_id']; ?>" selected="selected">
+                                        <?php echo $geo_zone['name']; ?>
+                                    </option>
+                                    <?php } else { ?>
+                                    <option value="<?php echo $geo_zone['geo_zone_id']; ?>">
+                                        <?php echo $geo_zone['name']; ?>
+                                    </option>
+                                    <?php } ?>
+                                    <?php } ?>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Enable logs -->
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">
+                                <?php echo $entry_logs; ?>
+                            </label>
+                            <div class="col-sm-10">
+                                <label class="radio-inline">
+                                    <?php if ($rbkmoney_payment_logs) { ?>
+                                    <input type="radio" name="rbkmoney_payment_logs" value="1" checked="checked" />
+                                    <?php echo $text_yes; ?>
+                                    <?php } else { ?>
+                                    <input type="radio" name="rbkmoney_payment_logs" value="1" />
+                                    <?php echo $text_yes; ?>
+                                    <?php } ?>
+                                </label>
+                                <label class="radio-inline">
+                                    <?php if (!$rbkmoney_payment_logs) { ?>
+                                    <input type="radio" name="rbkmoney_payment_logs" value="0" checked="checked" />
+                                    <?php echo $text_no; ?>
+                                    <?php } else { ?>
+                                    <input type="radio" name="rbkmoney_payment_logs" value="0" />
+                                    <?php echo $text_no; ?>
+                                    <?php } ?>
+                                </label>
                             </div>
                         </div>
 

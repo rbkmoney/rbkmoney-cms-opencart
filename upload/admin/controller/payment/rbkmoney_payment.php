@@ -61,6 +61,8 @@ class ControllerPaymentRBKmoneyPayment extends Controller
 
         $data['heading_title'] = $this->language->get('heading_title');
         $data['text_edit'] = $this->language->get('text_edit');
+        $data['text_yes'] = $this->language->get('text_yes');
+        $data['text_no'] = $this->language->get('text_no');
 
         $data['button_save'] = $this->language->get('button_save');
         $data['button_cancel'] = $this->language->get('button_cancel');
@@ -87,10 +89,34 @@ class ControllerPaymentRBKmoneyPayment extends Controller
             $data['rbkmoney_payment_sort_order'] = $this->config->get('rbkmoney_payment_sort_order');
         }
 
+        // Geo zone
+        $data['text_all_zones'] = $this->language->get('text_all_zones');
+        $data['entry_rbkmoney_payment_geo_zone_id'] = $this->language->get('entry_geo_zone');
+        $data['help_rbkmoney_payment_geo_zone_id'] = $this->language->get('help_geo_zone');
+
+        if (isset($this->request->post['rbkmoney_payment_geo_zone_id'])) {
+            $data['rbkmoney_payment_geo_zone_id'] = $this->request->post['rbkmoney_payment_geo_zone_id'];
+        } else {
+            $data['rbkmoney_payment_geo_zone_id'] = $this->config->get('rbkmoney_payment_geo_zone_id');
+        }
+
+        $this->load->model('localisation/geo_zone');
+
+        $data['geo_zones'] = $this->model_localisation_geo_zone->getGeoZones();
+
+        // Enable logs
+        $data['entry_logs'] = $this->language->get('entry_logs');
+
+        if (isset($this->request->post['rbkmoney_payment_logs'])) {
+            $data['rbkmoney_payment_logs'] = $this->request->post['rbkmoney_payment_logs'];
+        } else {
+            $data['rbkmoney_payment_logs'] = $this->config->get('rbkmoney_payment_logs');
+        }
 
         /**********************************************************************************************
          *                                  Common error warning                                      *
          **********************************************************************************************/
+
         /** @see validate() */
         if (isset($this->error['warning'])) {
             $data['error_warning'] = $this->error['warning'];
@@ -126,7 +152,6 @@ class ControllerPaymentRBKmoneyPayment extends Controller
         $data['entry_rbkmoney_payment_order_status_progress_id'] = $this->language->get('entry_order_status_progress');
         $data['help_rbkmoney_payment_order_status_progress_id'] = $this->language->get('help_order_status_progress');
 
-
         if (isset($this->request->post['rbkmoney_payment_order_status_progress_id'])) {
             $data['rbkmoney_payment_order_status_progress_id'] = $this->request->post['rbkmoney_payment_order_status_progress_id'];
         } else {
@@ -154,6 +179,7 @@ class ControllerPaymentRBKmoneyPayment extends Controller
             $data['error_shop_id'] = '';
         }
 
+
         /**********************************************************************************************
          *                                PAYMENT_FORM_PATH_IMG_LOGO                                  *
          **********************************************************************************************/
@@ -167,6 +193,7 @@ class ControllerPaymentRBKmoneyPayment extends Controller
             $data['rbkmoney_payment_form_path_logo'] = $this->config->get('rbkmoney_payment_form_path_logo');
         }
 
+
         /**********************************************************************************************
          *                                 PAYMENT_FORM_COMPANY_NAME                                  *
          **********************************************************************************************/
@@ -179,6 +206,7 @@ class ControllerPaymentRBKmoneyPayment extends Controller
         } else {
             $data['rbkmoney_payment_form_company_name'] = $this->config->get('rbkmoney_payment_form_company_name');
         }
+
 
         /**********************************************************************************************
          *                                   MERCHANT_PRIVATE_KEY                                     *
@@ -245,6 +273,7 @@ class ControllerPaymentRBKmoneyPayment extends Controller
         /**********************************************************************************************
          *                                      NOTIFICATION URL                                      *
          **********************************************************************************************/
+
         $data['entry_notify_url'] = $this->language->get('entry_notify_url');
         $data['help_notify_url'] = $this->language->get('help_notify_url');
         $data['notify_url'] = HTTPS_CATALOG . 'index.php?route=payment/rbkmoney_payment/notify';
@@ -252,7 +281,6 @@ class ControllerPaymentRBKmoneyPayment extends Controller
         /**********************************************************************************************
          *                                         REDIRECT URL                                       *
          **********************************************************************************************/
-        // success/failed redirect
 
         $data['header'] = $this->load->controller('common/header');
         $data['column_left'] = $this->load->controller('common/column_left');

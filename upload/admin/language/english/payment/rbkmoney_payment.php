@@ -8,7 +8,8 @@ $_['text_edit'] = 'Edit RBKmoney';
 $_['text_payment'] = 'Payment';
 $_['text_success'] = 'Settings module updated';
 $_['text_rbkmoney_payment'] = '<a href="https://rbk.money" onclick="return !window.open(this.href)"> <img src = "view/image/payment/rbkmoney_payment.png" alt="RBKmoney" title="RBKmoney" style="border: 1px solid #EEEEEE;" /> </a>';
-
+$_['text_yes'] = 'Yes';
+$_['text_no'] = 'No';
 
 // Common settings
 $_['entry_status'] = 'Status:';
@@ -16,6 +17,9 @@ $_['help_status'] = 'Status';
 
 $_['entry_sort_order'] = 'Sort order:';
 $_['help_sort_order'] = 'Sort order';
+
+$_['entry_geo_zone'] = 'Geographical area';
+$_['help_geo_zone'] = 'Geographical area';
 
 
 // RBKmoney settings
@@ -50,6 +54,7 @@ $_['error_currency'] = 'Currency is required';
 $_['entry_notify_url'] = 'Notification URL:';
 $_['help_notify_url'] = 'This address is to be inserted in a private office RBK Money';
 
+$_['entry_logs'] = 'Enable logs';
 
 // Common error
 $_['error_permission'] = 'You are not allowed to control this unit';

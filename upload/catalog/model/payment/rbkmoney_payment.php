@@ -12,13 +12,33 @@ class ModelPaymentRbkmoneyPayment extends Model
 
     public function getMethod($address, $total)
     {
-        $this->load->language('payment/rbkmoney_payment');
+        $this->load->language('payment/rbkmoney');
+
+        if ($this->config->get('rbkmoney_payment_status')) {
+
+            $query = $this->db->query("SELECT * FROM " . DB_PREFIX . "zone_to_geo_zone WHERE geo_zone_id = '" . (int)$this->config->get('rbkmoney_payment_geo_zone_id') . "' AND country_id = '" . (int)$address['country_id'] . "' AND (zone_id = '" . (int)$address['zone_id'] . "' OR zone_id = '0')");
+
+            if (!$this->config->get('rbkmoney_payment_geo_zone_id')) {
+                $status = TRUE;
+            } elseif ($query->num_rows) {
+                $status = TRUE;
+            } else {
+                $status = FALSE;
+            }
+        } else {
+            $status = FALSE;
+        }
 
         $method_data = array();
-        $method_data['code'] = 'rbkmoney_payment';
-        $method_data['title'] = $this->language->get('text_title');
-        $method_data['terms'] = '';
-        $method_data['sort_order'] = $this->config->get('rbkmoney_payment_sort_order');
+
+        if ($status) {
+            $method_data = array(
+                'code' => 'rbkmoney_payment',
+                'title' => $this->language->get('text_title'),
+                'terms' => '',
+                'sort_order' => $this->config->get('rbkmoney_payment_sort_order')
+            );
+        }
 
         return $method_data;
     }
@@ -36,7 +56,8 @@ class ModelPaymentRbkmoneyPayment extends Model
             'amount' => $this->prepare_amount($order_info['total']),
             'metadata' => $this->prepare_metadata($order_info['order_id']),
             'dueDate' => $this->prepare_due_date(),
-            'currency' => $order_info['currency_code'],
+            //'currency' => $order_info['currency_code'],
+            'currency' => 'RUB',
             'product' => $order_info['order_id'],
             'description' => $this->getProductDescription(),
         ];
@@ -195,9 +216,11 @@ class ModelPaymentRbkmoneyPayment extends Model
         return ($verify == static::OPENSSL_VERIFY_SIGNATURE_IS_CORRECT);
     }
 
-    private function logger($method, $message)
+    public function logger($method, $message)
     {
-        $this->log->write('rbkmoney ' . $method . '. ' . print_r($message, true));
+        if ($this->config->get('rbkmoney_payment_logs')) {
+            $this->log->write('rbkmoney ' . $method . '. ' . print_r($message, true));
+        }
     }
 
     public function addInvoice($invoice_id, $order_id)
@@ -206,7 +229,7 @@ class ModelPaymentRbkmoneyPayment extends Model
             `invoice_id` = '" . $invoice_id . "',
             `order_id` = '" . $order_id . "',
             `date_added` = now()";
-        $this->logger("DB",$query);
+        $this->logger("DB", $query);
 
         $this->db->query($query);
     }
@@ -214,7 +237,7 @@ class ModelPaymentRbkmoneyPayment extends Model
     public function getOrder($order_id)
     {
         $query = "SELECT * FROM `" . DB_PREFIX . "rbkmoney_payment_order` WHERE `order_id` = '" . $order_id . "' LIMIT 1";
-        $this->logger("DB",$query);
+        $this->logger("DB", $query);
 
         $qry = $this->db->query($query);
         if ($qry->num_rows) {
@@ -227,7 +250,7 @@ class ModelPaymentRbkmoneyPayment extends Model
     public function getInvoiceId($invoice_id)
     {
         $query = "SELECT * FROM `" . DB_PREFIX . "rbkmoney_payment_order` WHERE `invoice_id` = '" . $invoice_id . "' LIMIT 1";
-        $this->logger("DB",$query);
+        $this->logger("DB", $query);
 
         $qry = $this->db->query($query);
         if ($qry->num_rows) {
