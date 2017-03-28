@@ -8,6 +8,11 @@ class ModelPaymentRbkmoneyPayment extends Model
     const CREATE_INVOICE_TEMPLATE_DUE_DATE = 'Y-m-d\TH:i:s\Z';
     const CREATE_INVOICE_DUE_DATE = '+1 days';
 
+    /**
+     * Openssl verify
+     */
+    const OPENSSL_VERIFY_SIGNATURE_IS_CORRECT = 1;
+
     private $api_url = 'https://api.rbk.money/v1/';
 
     public function getMethod($address, $total)
