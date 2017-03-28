@@ -11,6 +11,7 @@ $_['text_rbkmoney_payment'] = '<a href="https://rbk.money" onclick="return !wind
 $_['text_yes'] = 'Yes';
 $_['text_no'] = 'No';
 
+
 // Common settings
 $_['entry_status'] = 'Status:';
 $_['help_status'] = 'Status';

@@ -12,11 +12,6 @@ class ControllerPaymentRbkmoneyPayment extends Controller
     const SIGNATURE = 'HTTP_X_SIGNATURE';
     const ORDER_ID = 'order_id';
 
-    /**
-     * Openssl verify
-     */
-    const OPENSSL_VERIFY_SIGNATURE_IS_CORRECT = 1;
-
     const CHECKOUT_URL = 'https://checkout.rbk.money/payframe/payframe.js';
 
     public function index()

@@ -15,6 +15,13 @@ class ModelPaymentRbkmoneyPayment extends Model
 
     private $api_url = 'https://api.rbk.money/v1/';
 
+    /**
+     * Get payment method
+     *
+     * @param $address
+     * @param $total
+     * @return array
+     */
     public function getMethod($address, $total)
     {
         $this->load->language('payment/rbkmoney');
@@ -48,6 +55,12 @@ class ModelPaymentRbkmoneyPayment extends Model
         return $method_data;
     }
 
+    /**
+     * Create a new invoice.
+     *
+     * @param array $order_info
+     * @return mixed
+     */
     public function create_invoice(array $order_info)
     {
         $headers = array();
@@ -61,8 +74,7 @@ class ModelPaymentRbkmoneyPayment extends Model
             'amount' => $this->prepare_amount($order_info['total']),
             'metadata' => $this->prepare_metadata($order_info['order_id']),
             'dueDate' => $this->prepare_due_date(),
-            //'currency' => $order_info['currency_code'],
-            'currency' => 'RUB',
+            'currency' => $order_info['currency_code'],
             'product' => $order_info['order_id'],
             'description' => $this->getProductDescription(),
         ];
@@ -71,6 +83,11 @@ class ModelPaymentRbkmoneyPayment extends Model
         return $this->send($url, 'POST', $headers, json_encode($data, true), 'init_invoice');
     }
 
+    /**
+     * Get product descriptions from the shopping cart
+     *
+     * @return string
+     */
     private function getProductDescription()
     {
         $products = '';
@@ -92,6 +109,13 @@ class ModelPaymentRbkmoneyPayment extends Model
         return $products;
     }
 
+    /**
+     * Create a new token to access the specified invoice.
+     *
+     * @param $invoice_id
+     * @return string
+     * @throws Exception
+     */
     public function create_access_token($invoice_id)
     {
         if (empty($invoice_id)) {
@@ -114,6 +138,17 @@ class ModelPaymentRbkmoneyPayment extends Model
         return $access_token;
     }
 
+    /**
+     * Send request
+     *
+     * @param $url
+     * @param $method
+     * @param array $headers
+     * @param string $data
+     * @param string $type
+     * @return mixed
+     * @throws Exception
+     */
     private function send($url, $method, $headers = [], $data = '', $type = '')
     {
         $logs = array(
@@ -199,6 +234,13 @@ class ModelPaymentRbkmoneyPayment extends Model
         return number_format($amount, 2, '.', '') * 100;
     }
 
+    /**
+     * Prepare API URL
+     *
+     * @param string $path
+     * @param array $query_params
+     * @return string
+     */
     private function prepare_api_url($path = '', $query_params = [])
     {
         $url = rtrim($this->api_url, '/') . '/' . $path;
@@ -208,6 +250,14 @@ class ModelPaymentRbkmoneyPayment extends Model
         return $url;
     }
 
+    /**
+     * Verification signature
+     *
+     * @param $data
+     * @param $signature
+     * @param $public_key
+     * @return bool
+     */
     public function verification_signature($data, $signature, $public_key)
     {
         if (empty($data) || empty($signature) || empty($public_key)) {
@@ -221,6 +271,12 @@ class ModelPaymentRbkmoneyPayment extends Model
         return ($verify == static::OPENSSL_VERIFY_SIGNATURE_IS_CORRECT);
     }
 
+    /**
+     * Data logging
+     *
+     * @param $method
+     * @param $message
+     */
     public function logger($method, $message)
     {
         if ($this->config->get('rbkmoney_payment_logs')) {
@@ -228,6 +284,12 @@ class ModelPaymentRbkmoneyPayment extends Model
         }
     }
 
+    /**
+     * Add an entry to the database on the invoice
+     *
+     * @param $invoice_id
+     * @param $order_id
+     */
     public function addInvoice($invoice_id, $order_id)
     {
         $query = "INSERT INTO `" . DB_PREFIX . "rbkmoney_payment_order` SET
@@ -239,6 +301,12 @@ class ModelPaymentRbkmoneyPayment extends Model
         $this->db->query($query);
     }
 
+    /**
+     * Get a record from the database by order number
+     *
+     * @param $order_id
+     * @return bool
+     */
     public function getOrder($order_id)
     {
         $query = "SELECT * FROM `" . DB_PREFIX . "rbkmoney_payment_order` WHERE `order_id` = '" . $order_id . "' LIMIT 1";
@@ -252,6 +320,12 @@ class ModelPaymentRbkmoneyPayment extends Model
         }
     }
 
+    /**
+     * Get a record from the database by invoice number
+     *
+     * @param $invoice_id
+     * @return bool
+     */
     public function getInvoiceId($invoice_id)
     {
         $query = "SELECT * FROM `" . DB_PREFIX . "rbkmoney_payment_order` WHERE `invoice_id` = '" . $invoice_id . "' LIMIT 1";
