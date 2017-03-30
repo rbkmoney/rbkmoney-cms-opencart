@@ -289,16 +289,6 @@ class ControllerPaymentRBKmoneyPayment extends Controller
         $this->response->setOutput($this->load->view('payment/rbkmoney_payment', $data));
     }
 
-    public function install() {
-        $this->load->model('payment/rbkmoney_payment');
-        $this->model_payment_rbkmoney_payment->install();
-    }
-
-    public function uninstall() {
-        $this->load->model('payment/rbkmoney_payment');
-        $this->model_payment_rbkmoney_payment->uninstall();
-    }
-
     /**
      * Validate parameters
      *

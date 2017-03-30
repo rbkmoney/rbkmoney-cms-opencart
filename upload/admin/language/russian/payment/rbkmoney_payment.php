@@ -7,7 +7,6 @@ $_['text_edit'] = 'Редактирование RBKmoney';
 // Text
 $_['text_payment'] = 'Оплата';
 $_['text_success'] = 'Настройки модуля обновлены!';
-$_['text_rbkmoney_payment'] = '<a href="https://rbk.money" onclick="return !window.open(this.href)"> <img src = "view/image/payment/rbkmoney_payment.png" alt="RBKmoney" title="RBKmoney" style="border: 1px solid #EEEEEE;" /> </a>';
 $_['text_yes'] = 'Да';
 $_['text_no'] = 'Нет';
 

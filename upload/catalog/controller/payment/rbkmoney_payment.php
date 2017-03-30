@@ -42,34 +42,19 @@ class ControllerPaymentRbkmoneyPayment extends Controller
         $invoice_access_token = '';
 
         try {
-            $rbkmoney_payment_order = $this->model_payment_rbkmoney_payment->getOrder($this->session->data['order_id']);
-
-            if(!$rbkmoney_payment_order) {
-                $response_create_invoice = $this->model_payment_rbkmoney_payment->create_invoice($order_info);
-                $create_invoice_encode = json_decode($response_create_invoice['body'], true);
-                if(isset($create_invoice_encode['id']) && !empty($invoiceId = $create_invoice_encode['id'])) {
-                    $invoiceId = $create_invoice_encode['id'];
-                    $this->model_payment_rbkmoney_payment->addInvoice($invoiceId, $this->session->data['order_id']);
-                } else {
-                    throw new Exception("Invoice ID not created");
-                }
-
-            } else {
-                $invoiceId = $rbkmoney_payment_order['invoice_id'];
+            $response_create_invoice = $this->model_payment_rbkmoney_payment->create_invoice($order_info);
+            $create_invoice_encode = json_decode($response_create_invoice['body'], true);
+            if (isset($create_invoice_encode['id']) && !empty($invoiceId = $create_invoice_encode['id'])) {
+                $invoiceId = $create_invoice_encode['id'];
+                $invoice_access_token = $this->model_payment_rbkmoney_payment->create_access_token($invoiceId);
             }
-
-            $invoice_access_token =  $this->model_payment_rbkmoney_payment->create_access_token($invoiceId);
 
             $this->model_checkout_order->addOrderHistory($this->session->data['order_id'], $this->config->get('rbkmoney_payment_order_status_progress_id'));
 
             $data['invoice_id'] = $invoiceId;
             $data['invoice_access_token'] = $invoice_access_token;
         } catch (Exception $ex) {
-            $logs = array();
-            $logs['error'] = array(
-                'code' => 'error',
-                'message' => $ex->getMessage(),
-            );
+            $logs['error']['message'] = $ex->getMessage();
             $this->model_payment_rbkmoney_payment->logger('exception', $logs);
         }
 
@@ -117,9 +102,7 @@ class ControllerPaymentRbkmoneyPayment extends Controller
         $this->model_payment_rbkmoney_payment->logger($method, $logs);
 
         if (empty($_SERVER[static::SIGNATURE])) {
-            $logs['error'] = array(
-                'message' => 'Сигнатура отсутствует',
-            );
+            $logs['error']['message'] = 'Сигнатура отсутствует';
             $this->model_payment_rbkmoney_payment->logger($method, $logs);
             $this->response->setOutput(header("HTTP/1.0 400 Bad Request"));
             exit();
@@ -138,9 +121,7 @@ class ControllerPaymentRbkmoneyPayment extends Controller
 
         foreach ($required_fields as $field) {
             if (empty($data[$field])) {
-                $logs['error'] = array(
-                    'message' => '',
-                );
+                $logs['error']['message'] = 'Отсутствует обязательное поле';
                 $this->model_payment_rbkmoney_payment->logger($method, $logs);
                 $this->response->setOutput(header("HTTP/1.0 400 Bad Request"));
                 exit();
@@ -148,9 +129,7 @@ class ControllerPaymentRbkmoneyPayment extends Controller
         }
 
         if (empty($data[static::METADATA][static::ORDER_ID])) {
-            $logs['error'] = array(
-                'message' => 'Отсутствует номер заказа',
-            );
+            $logs['error']['message'] = 'Отсутствует номер заказа';
             $this->model_payment_rbkmoney_payment->logger($method, $logs);
             $this->response->setOutput(header("HTTP/1.0 400 Bad Request"));
             exit();
@@ -159,9 +138,7 @@ class ControllerPaymentRbkmoneyPayment extends Controller
         $signature = base64_decode($_SERVER[static::SIGNATURE]);
         $public_key = $this->config->get('rbkmoney_payment_callback_public_key');
         if (!$this->model_payment_rbkmoney_payment->verification_signature($body, $signature, $public_key)) {
-            $logs['error'] = array(
-                'message' => 'Сигнатура не совпадает',
-            );
+            $logs['error']['message'] = 'Сигнатура не совпадает';
             $this->model_payment_rbkmoney_payment->logger($method, $logs);
             $this->response->setOutput(header("HTTP/1.0 400 Bad Request"));
             exit();
@@ -169,9 +146,7 @@ class ControllerPaymentRbkmoneyPayment extends Controller
 
         $orderId = $data[static::METADATA][static::ORDER_ID];
         if (!$order_info = $this->model_checkout_order->getOrder($orderId)) {
-            $logs['error'] = array(
-                'message' => 'Заказ ' . $orderId . ' не найден',
-            );
+            $logs['error']['message'] = 'Заказ ' . $orderId . ' не найден';
             $this->model_payment_rbkmoney_payment->logger($method, $logs);
             $this->response->setOutput(header("HTTP/1.0 400 Bad Request"));
             exit();
@@ -185,9 +160,7 @@ class ControllerPaymentRbkmoneyPayment extends Controller
         if ($data[static::METADATA] == 'paid' && $order_info['order_status_id'] != $this->config->get('rbkmoney_payment_order_status_id')) {
             $this->model_checkout_order->addOrderHistory($order_info['order_id'], $this->config->get('rbkmoney_payment_order_status_id'), 'RBKmoney', TRUE);
         } else {
-            $logs['error'] = array(
-                'message' => 'Заказ ' . $orderId . ' уже имеет финальный статус',
-            );
+            $logs['error']['message'] = 'Заказ ' . $orderId . ' уже имеет финальный статус';
             $this->model_payment_rbkmoney_payment->logger($method, $logs);
             $this->response->setOutput(header("HTTP/1.0 400 Bad Request"));
         }

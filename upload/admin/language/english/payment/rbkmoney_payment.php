@@ -7,7 +7,6 @@ $_['text_edit'] = 'Edit RBKmoney';
 // Text
 $_['text_payment'] = 'Payment';
 $_['text_success'] = 'Settings module updated';
-$_['text_rbkmoney_payment'] = '<a href="https://rbk.money" onclick="return !window.open(this.href)"> <img src = "view/image/payment/rbkmoney_payment.png" alt="RBKmoney" title="RBKmoney" style="border: 1px solid #EEEEEE;" /> </a>';
 $_['text_yes'] = 'Yes';
 $_['text_no'] = 'No';
 
