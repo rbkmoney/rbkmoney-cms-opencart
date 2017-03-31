@@ -58,11 +58,7 @@ class ModelPaymentRbkmoneyPayment extends Model
      */
     public function createInvoice(array $order_info)
     {
-        $headers = array();
-        $headers[] = 'X-Request-ID: ' . uniqid();
-        $headers[] = 'Authorization: Bearer ' . $this->config->get('rbkmoney_payment_private_key');
-        $headers[] = 'Content-type: application/json; charset=utf-8';
-        $headers[] = 'Accept: application/json';
+        $headers = $this->getHeaders();
 
         $data = [
             'shopID' => (int)$this->config->get('rbkmoney_payment_shop_id'),
@@ -80,6 +76,15 @@ class ModelPaymentRbkmoneyPayment extends Model
         $invoice_encode = json_decode($response['body'], true);
 
         return (!empty($invoice_encode['id'])) ? $invoice_encode['id'] : '';
+    }
+
+    private function getHeaders() {
+        $headers = array();
+        $headers[] = 'X-Request-ID: ' . uniqid();
+        $headers[] = 'Authorization: Bearer ' . $this->config->get('rbkmoney_payment_private_key');
+        $headers[] = 'Content-type: application/json; charset=utf-8';
+        $headers[] = 'Accept: application/json';
+        return $headers;
     }
 
     /**
@@ -120,11 +125,7 @@ class ModelPaymentRbkmoneyPayment extends Model
         if (empty($invoice_id)) {
             throw new Exception('Не передан обязательный параметр invoice_id');
         }
-        $headers = array();
-        $headers[] = 'X-Request-ID: ' . uniqid();
-        $headers[] = 'Authorization: Bearer ' . $this->config->get('rbkmoney_payment_private_key');
-        $headers[] = 'Content-type: application/json; charset=utf-8';
-        $headers[] = 'Accept: application/json';
+        $headers = $this->getHeaders();
 
         $url = $this->prepareApiUrl('processing/invoices/' . $invoice_id . '/access_tokens');
 
