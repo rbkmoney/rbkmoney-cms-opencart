@@ -7,8 +7,12 @@ $_['text_edit'] = 'Edit RBKmoney';
 // Text
 $_['text_payment'] = 'Payment';
 $_['text_success'] = 'Settings module updated';
+// Displays a logo and a link in the list of payment modules
+$_['text_rbkmoney_payment'] = '<a href="https://rbk.money" onclick="return !window.open(this.href)"> <img src = "view/image/payment/rbkmoney_payment.png" alt="RBKmoney" title="RBKmoney" style="border: 1px solid #EEEEEE;" /> </a>';
+
 $_['text_yes'] = 'Yes';
 $_['text_no'] = 'No';
+$_['entry_logs'] = 'Enable logs';
 
 
 // Common settings
@@ -47,14 +51,8 @@ $_['entry_callback_public_key'] = 'Callback public key:';
 $_['help_callback_public_key'] = 'Callback public key';
 $_['error_callback_public_key'] = 'Callback public key is required';
 
-$_['entry_currency'] = 'Currency:';
-$_['help_currency'] = 'Currency (ISO 4217)';
-$_['error_currency'] = 'Currency is required';
-
 $_['entry_notify_url'] = 'Notification URL:';
 $_['help_notify_url'] = 'This address is to be inserted in a private office RBK Money';
-
-$_['entry_logs'] = 'Enable logs';
 
 // Common error
 $_['error_permission'] = 'You are not allowed to control this unit';

@@ -123,23 +123,6 @@
                             </div>
                         </div>
 
-                        <!-- Currency -->
-                        <div class="form-group required">
-                            <label class="col-sm-2 control-label" for="rbkmoney_payment_currency">
-                                <?php echo $entry_currency; ?>
-                                <span data-toggle="tooltip" title="<?php echo $help_currency; ?>"></span>
-                            </label>
-                            <div class="col-sm-10">
-                                <input type="text" name="rbkmoney_payment_currency"
-                                       value="<?php echo $rbkmoney_payment_currency; ?>"
-                                       placeholder="<?php echo $help_currency; ?>" id="input-currency"
-                                       class="form-control"/>
-                                <?php if ($error_currency) { ?>
-                                <div class="text-danger"><?php echo $error_currency; ?></div>
-                                <?php } ?>
-                            </div>
-                        </div>
-
                         <!-- Payment sort order -->
                         <div class="form-group">
                             <label class="col-sm-2 control-label" for="rbkmoney_payment_sort_order">
@@ -165,7 +148,7 @@
                             <div class="col-sm-10">
                                 <select name="rbkmoney_payment_status" id="rbkmoney_payment_status"
                                         class="form-control">
-                                    <?php if ($entry_status) { ?>
+                                    <?php if ($rbkmoney_payment_status) { ?>
                                     <option value="1" selected="selected"><?php echo $text_enabled; ?></option>
                                     <option value="0"><?php echo $text_disabled; ?></option>
                                     <?php } else { ?>
@@ -191,7 +174,11 @@
 
                         <!-- Payment order status -->
                         <div class="form-group">
-                            <label class="col-sm-2 control-label" for="rbkmoney_payment_order_status_id"><span data-toggle="tooltip" title="<?php echo $help_rbkmoney_payment_order_status_id; ?>"><?php echo $entry_rbkmoney_payment_order_status_id; ?></span></label>
+                            <label class="col-sm-2 control-label" for="rbkmoney_payment_order_status_id">
+                                <span data-toggle="tooltip" title="<?php echo $help_order_status; ?>">
+                                    <?php echo $entry_order_status; ?>
+                                </span>
+                            </label>
                             <div class="col-sm-10">
                                 <select name="rbkmoney_payment_order_status_id" id="rbkmoney_payment_order_status_id" class="form-control">
                                     <?php foreach ($order_statuses as $order_status) { ?>
@@ -210,8 +197,8 @@
                         <!-- Payment order status progress -->
                         <div class="form-group">
                             <label class="col-sm-2 control-label" for="rbkmoney_payment_order_status_progress_id">
-                                <span data-toggle="tooltip" title="<?php echo $help_rbkmoney_payment_order_status_progress_id; ?>">
-                                    <?php echo $entry_rbkmoney_payment_order_status_progress_id; ?>
+                                <span data-toggle="tooltip" title="<?php echo $help_order_status_progress; ?>">
+                                    <?php echo $entry_order_status_progress; ?>
                                 </span>
                             </label>
                             <div class="col-sm-10">
@@ -234,8 +221,8 @@
                         <!-- Geo zone -->
                         <div class="form-group">
                             <label class="col-sm-2 control-label" for="rbkmoney_payment_geo_zone_id">
-                                <span data-toggle="tooltip" title="<?php echo $help_rbkmoney_payment_geo_zone_id; ?>">
-                                    <?php echo $entry_rbkmoney_payment_geo_zone_id; ?>
+                                <span data-toggle="tooltip" title="<?php echo $help_geo_zone; ?>">
+                                    <?php echo $entry_geo_zone; ?>
                                 </span>
                             </label>
                             <div class="col-sm-10">
@@ -282,6 +269,7 @@
                                 </label>
                             </div>
                         </div>
+
 
                     </div>
                 </form>

@@ -5,7 +5,98 @@
  */
 class ControllerPaymentRBKmoneyPayment extends Controller
 {
+
     private $error = array();
+
+    private $settings = array(
+        'common_parameters' => array(
+            'heading_title',
+            'text_edit',
+            'text_yes',
+            'text_no',
+
+            'button_save',
+            'button_cancel',
+
+            // Enable/Disable module
+            'entry_status',
+            'help_status',
+            'text_enabled',
+            'text_disabled',
+
+            // Sort order module
+            'entry_sort_order',
+            'help_sort_order',
+
+            // Enable logs for module
+            'entry_logs',
+
+            // Geo Zone
+            'text_all_zones',
+            'entry_geo_zone',
+            'help_geo_zone',
+
+            // Other parameters
+            'entry_order_status',
+            'help_order_status',
+
+            'entry_shop_id',
+            'help_shop_id',
+
+            'entry_form_path_logo',
+            'help_form_path_logo',
+
+            'entry_form_company_name',
+            'help_form_company_name',
+
+            'entry_private_key',
+            'help_private_key',
+
+            'entry_callback_public_key',
+            'help_callback_public_key',
+
+            'entry_currency',
+            'help_currency',
+
+            'entry_order_status_progress',
+            'help_order_status_progress',
+
+            'entry_notify_url',
+            'help_notify_url',
+        ),
+        'fields' => array(
+            'rbkmoney_payment_status',
+            'rbkmoney_payment_sort_order',
+            'rbkmoney_payment_geo_zone_id',
+            'rbkmoney_payment_logs',
+            'rbkmoney_payment_order_status_id',
+            'rbkmoney_payment_order_status_progress_id',
+            'rbkmoney_payment_form_path_logo',
+            'rbkmoney_payment_form_company_name',
+            'rbkmoney_payment_shop_id',
+            'rbkmoney_payment_private_key',
+            'rbkmoney_payment_callback_public_key',
+        ),
+        'errors' => array(
+            'error_shop_id',
+            'error_private_key',
+            'error_callback_public_key',
+        ),
+        'validate' => array(
+            array(
+                'field' => 'rbkmoney_payment_shop_id',
+                'error_name' => 'error_shop_id',
+            ),
+            array(
+                'field' => 'rbkmoney_payment_private_key',
+                'error_name' => 'error_private_key',
+            ),
+            array(
+                'field' => 'rbkmoney_payment_callback_public_key',
+                'error_name' => 'error_callback_public_key',
+            ),
+        ),
+    );
 
     public function index()
     {
@@ -16,271 +107,59 @@ class ControllerPaymentRBKmoneyPayment extends Controller
         $this->document->setTitle($this->language->get('heading_title'));
 
         $this->load->model('setting/setting');
+        $this->load->model('localisation/geo_zone');
+        $data['geo_zones'] = $this->model_localisation_geo_zone->getGeoZones();
 
         if (($this->request->server['REQUEST_METHOD'] == 'POST') && $this->validate()) {
             $this->model_setting_setting->editSetting('rbkmoney_payment', $this->request->post);
 
             $this->session->data['success'] = $this->language->get('text_success');
 
-            $this->response->redirect($this->url->link('extension/payment', 'token=' . $this->session->data['token'], true));
+            $this->response->redirect($this->prepareUrlLink('extension/payment'));
         }
 
-        /**********************************************************************************************
-         *                                      Bread crumbs                                          *
-         **********************************************************************************************/
+        $data['error_warning'] = (isset($this->error['warning'])) ? $this->error['warning'] : '';
 
-        $data['breadcrumbs'] = array();
+        $data['breadcrumbs'] = [
+            array(
+                'text' => $this->language->get('text_home'),
+                'href' => $this->prepareUrlLink('common/dashboard')
+            ),
+            array(
+                'text' => $this->language->get('text_payment'),
+                'href' => $this->prepareUrlLink('extension/payment')
+            ),
+            array(
+                'text' => $this->language->get('heading_title'),
+                'href' => $this->prepareUrlLink('payment/rbkmoney_payment')
+            )
+        ];
 
-        $data['breadcrumbs'][] = array(
-            'text' => $this->language->get('text_home'),
-            'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], 'SSL')
+        $this->settings['buttons'] = array(
+            'action' => $this->prepareUrlLink('payment/rbkmoney_payment'),
+            'cancel' => $this->prepareUrlLink('extension/payment'),
         );
 
-        $data['breadcrumbs'][] = array(
-            'text' => $this->language->get('text_payment'),
-            'href' => $this->url->link('extension/payment', 'token=' . $this->session->data['token'], 'SSL')
-        );
-
-        $data['breadcrumbs'][] = array(
-            'text' => $this->language->get('heading_title'),
-            'href' => $this->url->link('payment/rbkmoney_payment', 'token=' . $this->session->data['token'], 'SSL')
-        );
-
-
-        /**********************************************************************************************
-         *                                         Buttons                                            *
-         **********************************************************************************************/
-
-        $data['action'] = $this->url->link('payment/rbkmoney_payment', 'token=' . $this->session->data['token'], 'SSL');
-        $data['cancel'] = $this->url->link('extension/payment', 'token=' . $this->session->data['token'], 'SSL');
-
-
-        /**********************************************************************************************
-         *                                    Common parameters                                       *
-         **********************************************************************************************/
-
-        $data['heading_title'] = $this->language->get('heading_title');
-        $data['text_edit'] = $this->language->get('text_edit');
-        $data['text_yes'] = $this->language->get('text_yes');
-        $data['text_no'] = $this->language->get('text_no');
-
-        $data['button_save'] = $this->language->get('button_save');
-        $data['button_cancel'] = $this->language->get('button_cancel');
-
-        // Enable/Disable module
-        $data['entry_status'] = $this->language->get('entry_status');
-        $data['help_status'] = $this->language->get('help_status');
-        $data['text_enabled'] = $this->language->get('text_enabled');
-        $data['text_disabled'] = $this->language->get('text_disabled');
-
-        if (isset($this->request->post['rbkmoney_payment_status'])) {
-            $data['rbkmoney_payment_status'] = $this->request->post['rbkmoney_payment_status'];
-        } else {
-            $data['rbkmoney_payment_status'] = $this->config->get('rbkmoney_payment_status');
+        foreach ($this->settings['errors'] as $error) {
+            $data[$error] = $this->getErrorByName($error);
         }
 
-        // Sort order
-        $data['entry_sort_order'] = $this->language->get('entry_sort_order');
-        $data['help_sort_order'] = $this->language->get('help_sort_order');
-
-        if (isset($this->request->post['rbkmoney_payment_sort_order'])) {
-            $data['rbkmoney_payment_sort_order'] = $this->request->post['rbkmoney_payment_sort_order'];
-        } else {
-            $data['rbkmoney_payment_sort_order'] = $this->config->get('rbkmoney_payment_sort_order');
+        foreach ($this->settings['buttons'] as $name => $value) {
+            $data[$name] = $this->language->get($value);
         }
 
-        // Geo zone
-        $data['text_all_zones'] = $this->language->get('text_all_zones');
-        $data['entry_rbkmoney_payment_geo_zone_id'] = $this->language->get('entry_geo_zone');
-        $data['help_rbkmoney_payment_geo_zone_id'] = $this->language->get('help_geo_zone');
-
-        if (isset($this->request->post['rbkmoney_payment_geo_zone_id'])) {
-            $data['rbkmoney_payment_geo_zone_id'] = $this->request->post['rbkmoney_payment_geo_zone_id'];
-        } else {
-            $data['rbkmoney_payment_geo_zone_id'] = $this->config->get('rbkmoney_payment_geo_zone_id');
+        foreach ($this->settings['common_parameters'] as $common_parameter) {
+            $data[$common_parameter] = $this->language->get($common_parameter);
         }
 
-        $this->load->model('localisation/geo_zone');
-
-        $data['geo_zones'] = $this->model_localisation_geo_zone->getGeoZones();
-
-        // Enable logs
-        $data['entry_logs'] = $this->language->get('entry_logs');
-
-        if (isset($this->request->post['rbkmoney_payment_logs'])) {
-            $data['rbkmoney_payment_logs'] = $this->request->post['rbkmoney_payment_logs'];
-        } else {
-            $data['rbkmoney_payment_logs'] = $this->config->get('rbkmoney_payment_logs');
+        foreach ($this->settings['fields'] as $field) {
+            $data[$field] = $this->getConfigByField($field);
         }
-
-        /**********************************************************************************************
-         *                                  Common error warning                                      *
-         **********************************************************************************************/
-
-        /** @see validate() */
-        if (isset($this->error['warning'])) {
-            $data['error_warning'] = $this->error['warning'];
-        } else {
-            $data['error_warning'] = '';
-        }
-
-        /**********************************************************************************************
-         *                                    RBKmoney SETTINGS                                       *
-         **********************************************************************************************/
-
-        /**********************************************************************************************
-         *                                   PAYMENT ORDER STATUS                                     *
-         **********************************************************************************************/
-
-        $data['entry_rbkmoney_payment_order_status_id'] = $this->language->get('entry_order_status');
-        $data['help_rbkmoney_payment_order_status_id'] = $this->language->get('help_order_status');
 
         $this->load->model('localisation/order_status');
         $data['order_statuses'] = $this->model_localisation_order_status->getOrderStatuses();
 
-        if (isset($this->request->post['rbkmoney_payment_order_status_id'])) {
-            $data['rbkmoney_payment_order_status_id'] = $this->request->post['rbkmoney_payment_order_status_id'];
-        } else {
-            $data['rbkmoney_payment_order_status_id'] = $this->config->get('rbkmoney_payment_order_status_id');
-        }
-
-
-        /**********************************************************************************************
-         *                              PAYMENT ORDER STATUS PROGRESS                                 *
-         **********************************************************************************************/
-
-        $data['entry_rbkmoney_payment_order_status_progress_id'] = $this->language->get('entry_order_status_progress');
-        $data['help_rbkmoney_payment_order_status_progress_id'] = $this->language->get('help_order_status_progress');
-
-        if (isset($this->request->post['rbkmoney_payment_order_status_progress_id'])) {
-            $data['rbkmoney_payment_order_status_progress_id'] = $this->request->post['rbkmoney_payment_order_status_progress_id'];
-        } else {
-            $data['rbkmoney_payment_order_status_progress_id'] = $this->config->get('rbkmoney_payment_order_status_progress_id');
-        }
-
-
-        /**********************************************************************************************
-         *                                         SHOP ID                                            *
-         **********************************************************************************************/
-
-        $data['entry_shop_id'] = $this->language->get('entry_shop_id');
-        $data['help_shop_id'] = $this->language->get('help_shop_id');
-
-        if (isset($this->request->post['rbkmoney_payment_shop_id'])) {
-            $data['rbkmoney_payment_shop_id'] = $this->request->post['rbkmoney_payment_shop_id'];
-        } else {
-            $data['rbkmoney_payment_shop_id'] = $this->config->get('rbkmoney_payment_shop_id');
-        }
-
-        /** @see validate() */
-        if (isset($this->error['error_shop_id'])) {
-            $data['error_shop_id'] = $this->error['error_shop_id'];
-        } else {
-            $data['error_shop_id'] = '';
-        }
-
-
-        /**********************************************************************************************
-         *                                PAYMENT_FORM_PATH_IMG_LOGO                                  *
-         **********************************************************************************************/
-
-        $data['entry_form_path_logo'] = $this->language->get('entry_form_path_logo');
-        $data['help_form_path_logo'] = $this->language->get('help_form_path_logo');
-
-        if (isset($this->request->post['rbkmoney_payment_form_path_logo'])) {
-            $data['rbkmoney_payment_form_path_logo'] = $this->request->post['rbkmoney_payment_form_path_logo'];
-        } else {
-            $data['rbkmoney_payment_form_path_logo'] = $this->config->get('rbkmoney_payment_form_path_logo');
-        }
-
-
-        /**********************************************************************************************
-         *                                 PAYMENT_FORM_COMPANY_NAME                                  *
-         **********************************************************************************************/
-
-        $data['entry_form_company_name'] = $this->language->get('entry_form_company_name');
-        $data['help_form_company_name'] = $this->language->get('help_form_company_name');
-
-        if (isset($this->request->post['rbkmoney_payment_form_company_name'])) {
-            $data['rbkmoney_payment_form_company_name'] = $this->request->post['rbkmoney_payment_form_company_name'];
-        } else {
-            $data['rbkmoney_payment_form_company_name'] = $this->config->get('rbkmoney_payment_form_company_name');
-        }
-
-
-        /**********************************************************************************************
-         *                                   MERCHANT_PRIVATE_KEY                                     *
-         **********************************************************************************************/
-
-        $data['entry_private_key'] = $this->language->get('entry_private_key');
-        $data['help_private_key'] = $this->language->get('help_private_key');
-
-        if (isset($this->request->post['rbkmoney_payment_private_key'])) {
-            $data['rbkmoney_payment_private_key'] = $this->request->post['rbkmoney_payment_private_key'];
-        } else {
-            $data['rbkmoney_payment_private_key'] = $this->config->get('rbkmoney_payment_private_key');
-        }
-
-        /** @see validate() */
-        if (isset($this->error['error_private_key'])) {
-            $data['error_private_key'] = $this->error['error_private_key'];
-        } else {
-            $data['error_private_key'] = '';
-        }
-
-
-        /**********************************************************************************************
-         *                               MERCHANT_CALLBACK_PUBLIC_KEY                                 *
-         **********************************************************************************************/
-
-        $data['entry_callback_public_key'] = $this->language->get('entry_callback_public_key');
-        $data['help_callback_public_key'] = $this->language->get('help_callback_public_key');
-
-        if (isset($this->request->post['rbkmoney_payment_callback_public_key'])) {
-            $data['rbkmoney_payment_callback_public_key'] = $this->request->post['rbkmoney_payment_callback_public_key'];
-        } else {
-            $data['rbkmoney_payment_callback_public_key'] = $this->config->get('rbkmoney_payment_callback_public_key');
-        }
-
-        /** @see validate() */
-        if (isset($this->error['error_callback_public_key'])) {
-            $data['error_callback_public_key'] = $this->error['error_callback_public_key'];
-        } else {
-            $data['error_callback_public_key'] = '';
-        }
-
-
-        /**********************************************************************************************
-         *                                         CURRENCY                                           *
-         **********************************************************************************************/
-
-        $data['entry_currency'] = $this->language->get('entry_currency');
-        $data['help_currency'] = $this->language->get('help_currency');
-
-        if (isset($this->request->post['rbkmoney_payment_currency'])) {
-            $data['rbkmoney_payment_currency'] = $this->request->post['rbkmoney_payment_currency'];
-        } else {
-            $data['rbkmoney_payment_currency'] = $this->config->get('rbkmoney_payment_currency');
-        }
-
-        /** @see validate() */
-        if (isset($this->error['error_currency'])) {
-            $data['error_currency'] = $this->error['error_currency'];
-        } else {
-            $data['error_currency'] = '';
-        }
-
-        /**********************************************************************************************
-         *                                      NOTIFICATION URL                                      *
-         **********************************************************************************************/
-
-        $data['entry_notify_url'] = $this->language->get('entry_notify_url');
-        $data['help_notify_url'] = $this->language->get('help_notify_url');
-        $data['notify_url'] = HTTPS_CATALOG . 'index.php?route=payment/rbkmoney_payment/notify';
-
-        /**********************************************************************************************
-         *                                         REDIRECT URL                                       *
-         **********************************************************************************************/
+        $data['notify_url'] = $this->getNotifyUrl();
 
         $data['header'] = $this->load->controller('common/header');
         $data['column_left'] = $this->load->controller('common/column_left');
@@ -300,25 +179,37 @@ class ControllerPaymentRBKmoneyPayment extends Controller
             $this->error['warning'] = $this->language->get('error_permission');
         }
 
-        if (!$this->request->post['rbkmoney_payment_shop_id']) {
-            $this->error['error_shop_id'] = $this->language->get('error_shop_id');
-        }
-
-        if (!$this->request->post['rbkmoney_payment_private_key']) {
-            $this->error['error_private_key'] = $this->language->get('error_private_key');
-        }
-
-        if (!$this->request->post['rbkmoney_payment_callback_public_key']) {
-            $this->error['error_callback_public_key'] = $this->language->get('error_callback_public_key');
-        }
-
-        if (!$this->request->post['rbkmoney_payment_currency']) {
-            $this->error['error_currency'] = $this->language->get('error_currency');
+        foreach ($this->settings['validate'] as $validate) {
+            if (!$this->request->post[$validate['field']]) {
+                $this->error[$validate['error_name']] = $this->language->get($validate['error_name']);
+            }
         }
 
         return !$this->error;
     }
 
+    private function getNotifyUrl()
+    {
+        return HTTPS_CATALOG . 'index.php?route=payment/rbkmoney_payment/notify';
+    }
+
+    private function getConfigByField($fieldName)
+    {
+        return (isset($this->request->post[$fieldName]))
+            ? $this->request->post[$fieldName]
+            : $this->config->get($fieldName);
+    }
+
+    private function prepareUrlLink($link)
+    {
+        return $this->url->link($link, 'token=' . $this->session->data['token'], 'SSL');
+    }
+
+
+    private function getErrorByName($name, $default_message = '')
+    {
+        return (isset($this->error[$name])) ? $this->error[$name] : $default_message;
+    }
 }
 
 ?>

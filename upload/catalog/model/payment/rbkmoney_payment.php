@@ -8,11 +8,6 @@ class ModelPaymentRbkmoneyPayment extends Model
     const CREATE_INVOICE_TEMPLATE_DUE_DATE = 'Y-m-d\TH:i:s\Z';
     const CREATE_INVOICE_DUE_DATE = '+1 days';
 
-    /**
-     * Openssl verify
-     */
-    const OPENSSL_VERIFY_SIGNATURE_IS_CORRECT = 1;
-
     private $api_url = 'https://api.rbk.money/v1/';
 
     /**
@@ -74,13 +69,18 @@ class ModelPaymentRbkmoneyPayment extends Model
             'amount' => $this->prepare_amount($order_info['total']),
             'metadata' => $this->prepare_metadata($order_info['order_id']),
             'dueDate' => $this->prepare_due_date(),
-            'currency' => $order_info['currency_code'],
+            //'currency' => $order_info['currency_code'],
+            'currency' => 'RUB',
             'product' => $order_info['order_id'],
             'description' => $this->getProductDescription(),
         ];
 
         $url = $this->prepare_api_url('processing/invoices');
-        return $this->send($url, 'POST', $headers, json_encode($data, true), 'init_invoice');
+
+        $response = $this->send($url, 'POST', $headers, json_encode($data, true), 'init_invoice');
+        $invoice_encode = json_decode($response['body'], true);
+
+        return (!empty($invoice_encode['id'])) ? $invoice_encode['id'] : '';
     }
 
     /**
