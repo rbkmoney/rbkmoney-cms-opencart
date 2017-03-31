@@ -56,7 +56,7 @@ class ModelPaymentRbkmoneyPayment extends Model
      * @param array $order_info
      * @return mixed
      */
-    public function create_invoice(array $order_info)
+    public function createInvoice(array $order_info)
     {
         $headers = array();
         $headers[] = 'X-Request-ID: ' . uniqid();
@@ -66,15 +66,15 @@ class ModelPaymentRbkmoneyPayment extends Model
 
         $data = [
             'shopID' => (int)$this->config->get('rbkmoney_payment_shop_id'),
-            'amount' => $this->prepare_amount($order_info['total']),
-            'metadata' => $this->prepare_metadata($order_info['order_id']),
-            'dueDate' => $this->prepare_due_date(),
+            'amount' => $this->prepareAmount($order_info['total']),
+            'metadata' => $this->prepareMetadata($order_info['order_id']),
+            'dueDate' => $this->prepareDueDate(),
             'currency' => strtoupper($order_info['currency_code']),
             'product' => $order_info['order_id'],
             'description' => $this->getProductDescription(),
         ];
 
-        $url = $this->prepare_api_url('processing/invoices');
+        $url = $this->prepareApiUrl('processing/invoices');
 
         $response = $this->send($url, 'POST', $headers, json_encode($data, true), 'init_invoice');
         $invoice_encode = json_decode($response['body'], true);
@@ -115,7 +115,7 @@ class ModelPaymentRbkmoneyPayment extends Model
      * @return string
      * @throws Exception
      */
-    public function create_access_token($invoice_id)
+    public function createAccessToken($invoice_id)
     {
         if (empty($invoice_id)) {
             throw new Exception('Не передан обязательный параметр invoice_id');
@@ -126,7 +126,7 @@ class ModelPaymentRbkmoneyPayment extends Model
         $headers[] = 'Content-type: application/json; charset=utf-8';
         $headers[] = 'Accept: application/json';
 
-        $url = $this->prepare_api_url('processing/invoices/' . $invoice_id . '/access_tokens');
+        $url = $this->prepareApiUrl('processing/invoices/' . $invoice_id . '/access_tokens');
 
         $response = $this->send($url, 'POST', $headers, '', 'access_tokens');
         if ($response['http_code'] != 201) {
@@ -200,7 +200,7 @@ class ModelPaymentRbkmoneyPayment extends Model
      *
      * @return string
      */
-    private function prepare_due_date()
+    private function prepareDueDate()
     {
         date_default_timezone_set('UTC');
         return date(static::CREATE_INVOICE_TEMPLATE_DUE_DATE, strtotime(static::CREATE_INVOICE_DUE_DATE));
@@ -212,7 +212,7 @@ class ModelPaymentRbkmoneyPayment extends Model
      * @param $order_id
      * @return array
      */
-    private function prepare_metadata($order_id)
+    private function prepareMetadata($order_id)
     {
         return [
             'cms' => 'opencart',
@@ -228,7 +228,7 @@ class ModelPaymentRbkmoneyPayment extends Model
      * @param $amount int
      * @return int
      */
-    private function prepare_amount($amount)
+    private function prepareAmount($amount)
     {
         return number_format($amount, 2, '.', '') * 100;
     }
@@ -240,7 +240,7 @@ class ModelPaymentRbkmoneyPayment extends Model
      * @param array $query_params
      * @return string
      */
-    private function prepare_api_url($path = '', $query_params = [])
+    private function prepareApiUrl($path = '', $query_params = [])
     {
         $url = rtrim($this->api_url, '/') . '/' . $path;
         if (!empty($query_params)) {
@@ -257,7 +257,7 @@ class ModelPaymentRbkmoneyPayment extends Model
      * @param $public_key
      * @return bool
      */
-    public function verification_signature($data, $signature, $public_key)
+    public function verificationSignature($data, $signature, $public_key)
     {
         if (empty($data) || empty($signature) || empty($public_key)) {
             return FALSE;

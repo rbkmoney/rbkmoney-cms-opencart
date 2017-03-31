@@ -45,8 +45,8 @@ class ControllerPaymentRbkmoneyPayment extends Controller
         $invoice_access_token = '';
 
         try {
-            $invoiceId = $this->model_payment_rbkmoney_payment->create_invoice($order_info);
-            $invoice_access_token = $this->model_payment_rbkmoney_payment->create_access_token($invoiceId);
+            $invoiceId = $this->model_payment_rbkmoney_payment->createInvoice($order_info);
+            $invoice_access_token = $this->model_payment_rbkmoney_payment->createAccessToken($invoiceId);
 
             $this->model_checkout_order->addOrderHistory(
                 $this->session->data['order_id'],
