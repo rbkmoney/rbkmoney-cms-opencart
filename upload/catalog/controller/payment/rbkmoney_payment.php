@@ -28,7 +28,7 @@ class ControllerPaymentRbkmoneyPayment extends Controller
 
     const OPENSSL_VERIFY_SIGNATURE_IS_CORRECT = 1;
 
-    const CHECKOUT_URL = 'http://checkout.rbk.test:8080/checkout.js';
+    const CHECKOUT_URL = 'https://checkout.rbk.money/checkout.js';
 
     public function index()
     {

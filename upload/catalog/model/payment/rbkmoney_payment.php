@@ -13,7 +13,7 @@ class ModelPaymentRbkmoneyPayment extends Model
     const SIGNATURE_DIGEST = 'digest';
     const SIGNATURE_PATTERN = "|alg=(\S+);\sdigest=(.*)|i";
 
-    private $api_url = 'http://api.rbk.test:8080/v1/';
+    private $api_url = 'https://api.rbk.money/v1/';
 
     public function getMethod($address, $total)
     {
