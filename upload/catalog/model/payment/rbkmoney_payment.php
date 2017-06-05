@@ -64,8 +64,7 @@ class ModelPaymentRbkmoneyPayment extends Model
             'amount' => $this->prepareAmount($order_info['total']),
             'metadata' => $this->prepareMetadata($order_info['order_id']),
             'dueDate' => $this->prepareDueDate(),
-            //'currency' => $order_info['currency_code'],
-            'currency' => 'RUB',
+            'currency' => $order_info['currency_code'],
             'product' => $order_info['order_id'],
             'description' => $this->getProductDescription(),
         ];
