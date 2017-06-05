@@ -5,19 +5,30 @@ class ControllerPaymentRbkmoneyPayment extends Controller
     const HEADER_OK = "HTTP/1.0 200 OK";
     const HEADER_BAD_REQUEST = "HTTP/1.0 400 Bad Request";
 
-    const INVOICE_ID = 'invoice_id';
-    const PAYMENT_ID = 'payment_id';
-    const AMOUNT = 'amount';
-    const CURRENCY = 'currency';
-    const CREATED_AT = 'created_at';
-    const METADATA = 'metadata';
-    const STATUS = 'status';
-    const SIGNATURE = 'HTTP_X_SIGNATURE';
+    /**
+     * Constants for Callback
+     */
+
     const ORDER_ID = 'order_id';
+
+    const EVENT_TYPE = 'eventType';
+
+    const INVOICE = 'invoice';
+    const INVOICE_ID = 'id';
+    const INVOICE_SHOP_ID = 'shopID';
+    const INVOICE_METADATA = 'metadata';
+    const INVOICE_STATUS = 'status';
+    const INVOICE_AMOUNT = 'amount';
+
+    const SIGNATURE = 'HTTP_CONTENT_SIGNATURE';
+    const SIGNATURE_ALG = 'alg';
+    const SIGNATURE_DIGEST = 'digest';
+    const SIGNATURE_PATTERN = "|alg=(\S+);\sdigest=(.*)|i";
+
 
     const OPENSSL_VERIFY_SIGNATURE_IS_CORRECT = 1;
 
-    const CHECKOUT_URL = 'https://checkout.rbk.money/payframe/payframe.js';
+    const CHECKOUT_URL = 'http://checkout.rbk.test:8080/checkout.js';
 
     public function index()
     {
@@ -28,17 +39,17 @@ class ControllerPaymentRbkmoneyPayment extends Controller
         $this->load->model('checkout/order');
         $this->load->model('payment/rbkmoney_payment');
 
-        $data['action'] = static::CHECKOUT_URL;
+        $data['payment_form_url'] = static::CHECKOUT_URL;
+        $data['payment_form_success_url'] = $this->url->link('checkout/success');
+        $data['form_css_button'] = strip_tags($this->config->get('rbkmoney_payment_form_css_button'));
         $data['shop_id'] = $this->config->get('rbkmoney_payment_shop_id');
         $data['form_path_logo'] = $this->config->get('rbkmoney_payment_form_path_logo');
         $data['form_company_name'] = $this->config->get('rbkmoney_payment_form_company_name');
+        $data['form_button_label'] = $this->config->get('rbkmoney_payment_form_button_label');
+        $data['form_description'] = $this->config->get('rbkmoney_payment_form_description');
         $data['private_key'] = $this->config->get('rbkmoney_payment_private_key');
-        $data['success_redirect_url'] = $this->url->link('payment/rbkmoney_payment/success_url_redirect');
-        $data['failed_redirect_url'] = $this->url->link('payment/rbkmoney_payment/failed_url_redirect');
 
         $order_info = $this->model_checkout_order->getOrder($this->session->data['order_id']);
-        $data['amount'] = number_format($order_info['total'], 2, '.', '');
-        $data['currency'] = $order_info['currency_code'];
         $data['order_id'] = $this->session->data['order_id'];
 
         $invoiceId = '';
@@ -66,104 +77,113 @@ class ControllerPaymentRbkmoneyPayment extends Controller
     }
 
     /**
-     * http{s}://{your-site}/index.php?route=payment/rbkmoney_payment/success_url_redirect
-     */
-    public function success_url_redirect()
-    {
-        header('Location: ' . $this->url->link('checkout/success'), true, 301);
-        exit();
-    }
-
-    /**
-     * http{s}://{your-site}/index.php?route=payment/rbkmoney_payment/failed_url_redirect
-     */
-    public function failed_url_redirect()
-    {
-        header('Location: ' . $this->url->link('checkout/payment'), true, 301);
-        exit();
-    }
-
-    /**
      * http{s}://{your-site}/index.php?route=payment/rbkmoney_payment/callback
      */
     public function callback()
     {
-        $body = file_get_contents('php://input');
+        $content = file_get_contents('php://input');
         $logs = array(
             'request' => array(
                 'method' => 'POST',
-                'data' => $body,
+                'data' => $content,
             ),
         );
+
 
         $method = 'notification';
         $this->load->model('payment/rbkmoney_payment');
         $this->model_payment_rbkmoney_payment->logger($method, $logs);
 
         if (empty($_SERVER[static::SIGNATURE])) {
-            $logs['error']['message'] = 'Сигнатура отсутствует';
-            $this->outputWithLogger($method, $logs);
+            $logs['error']['message'] = 'Webhook notification signature missing';
+            return $this->outputWithLogger($method, $logs, $logs['error']['message']);
         }
 
-        $required_fields = array(
-            static::INVOICE_ID,
-            static::PAYMENT_ID,
-            static::AMOUNT,
-            static::CURRENCY,
-            static::CREATED_AT,
-            static::METADATA,
-            static::STATUS
-        );
-        $data = json_decode($body, TRUE);
+        $logs['signature'] = $_SERVER[static::SIGNATURE];
+
+        $params_signature = $this->model_payment_rbkmoney_payment->getParametersContentSignature($_SERVER[static::SIGNATURE]);
+        if (empty($params_signature[static::SIGNATURE_ALG])) {
+            $logs['error']['message'] = 'Missing required parameter ' . static::SIGNATURE_ALG;
+            return $this->outputWithLogger($method, $logs, $logs['error']['message']);
+        }
+
+        if (empty($params_signature[static::SIGNATURE_DIGEST])) {
+            $logs['error']['message'] = 'Missing required parameter ' . static::SIGNATURE_DIGEST;
+            return $this->outputWithLogger($method, $logs, $logs['error']['message']);
+        }
+
+        $signature = $this->model_payment_rbkmoney_payment->urlSafeB64decode($params_signature[static::SIGNATURE_DIGEST]);
+        $public_key = $this->config->get('rbkmoney_payment_callback_public_key');
+        if (!$this->model_payment_rbkmoney_payment->verificationSignature($content, $signature, $public_key)) {
+            $logs['error']['message'] = 'Webhook notification signature mismatch';
+            return $this->outputWithLogger($method, $logs, $logs['error']['message']);
+        }
+
+        $required_fields = [static::INVOICE, static::EVENT_TYPE];
+        $data = json_decode($content, TRUE);
 
         foreach ($required_fields as $field) {
             if (empty($data[$field])) {
-                $logs['error']['message'] = 'Отсутствует обязательное поле';
-                $this->outputWithLogger($method, $logs);
+                $logs['error']['message'] = 'One or more required fields are missing';
+                return $this->outputWithLogger($method, $logs, $logs['error']['message']);
             }
         }
 
-        if (empty($data[static::METADATA][static::ORDER_ID])) {
-            $logs['error']['message'] = 'Отсутствует номер заказа';
-            $this->outputWithLogger($method, $logs);
+        $current_shop_id = (int)$this->config->get('rbkmoney_payment_shop_id');
+        if ($data[static::INVOICE][static::INVOICE_SHOP_ID] != $current_shop_id) {
+            $logs['error']['message'] = static::INVOICE_SHOP_ID . ' is missing';
+            return $this->outputWithLogger($method, $logs, $logs['error']['message']);
         }
 
-        $signature = base64_decode($_SERVER[static::SIGNATURE]);
-        $public_key = $this->config->get('rbkmoney_payment_callback_public_key');
-        if (!$this->model_payment_rbkmoney_payment->verification_signature($body, $signature, $public_key)) {
-            $logs['error']['message'] = 'Сигнатура не совпадает';
-            $this->outputWithLogger($method, $logs);
+
+        if (empty($data[static::INVOICE][static::INVOICE_METADATA][static::ORDER_ID])) {
+            $logs['error']['message'] = static::ORDER_ID . ' is missing';
+            return $this->outputWithLogger($method, $logs, $logs['error']['message']);
         }
 
-        $orderId = $data[static::METADATA][static::ORDER_ID];
-        if (!$order_info = $this->model_checkout_order->getOrder($orderId)) {
-            $logs['error']['message'] = 'Заказ ' . $orderId . ' не найден';
-            $this->outputWithLogger($method, $logs);
+
+        $order_id = $data[static::INVOICE][static::INVOICE_METADATA][static::ORDER_ID];
+        $this->load->model('checkout/order');
+
+        if (!$order_info = $this->model_checkout_order->getOrder($order_id)) {
+            $logs['error']['message'] = 'Order ' . $order_id . ' is missing';
+            return $this->outputWithLogger($method, $logs, $logs['error']['message']);
+        }
+
+        if (!empty($order_info['total'])) {
+            $order_amount = (int)$this->model_payment_rbkmoney_payment->prepareAmount($order_info['total']);
+            $invoice_amount = (int)$data[static::INVOICE][static::INVOICE_AMOUNT];
+            if($order_amount != $invoice_amount) {
+                $logs['error']['message'] = 'Received amount vs Order amount mismatch -' . var_dump($data[static::INVOICE][static::INVOICE_AMOUNT]);
+                return $this->outputWithLogger($method, $logs, $logs['error']['message']);
+            }
         }
 
         if ($order_info['order_status_id'] == 0) {
             $this->model_checkout_order->addOrderHistory($order_info['order_id'], $this->config->get('rbkmoney_payment_order_status_id'), 'RBKmoney');
             $logs['order_info'] = $order_info;
-            $this->outputWithLogger($method, $logs, self::HEADER_OK);
+            return $this->outputWithLogger($method, $logs, 'OK', self::HEADER_OK);
         }
 
-        if (($data[static::STATUS] == 'paid') && ($order_info['order_status_id'] != $this->config->get('rbkmoney_payment_order_status_id'))) {
+        if (($data[static::INVOICE][static::INVOICE_STATUS] == 'paid') && ($order_info['order_status_id'] != $this->config->get('rbkmoney_payment_order_status_id'))) {
             $this->model_checkout_order->addOrderHistory($order_info['order_id'], $this->config->get('rbkmoney_payment_order_status_id'), 'RBKmoney', TRUE);
             $logs['order_info'] = $order_info;
-            $this->outputWithLogger($method, $logs, self::HEADER_OK);
+            return $this->outputWithLogger($method, $logs, 'OK', self::HEADER_OK);
         } else {
-            $logs['error']['message'] = 'Заказ ' . $orderId . ' уже имеет финальный статус';
-            $this->outputWithLogger($method, $logs);
+            $logs['error']['message'] = 'Order ' . $order_id . ' already has a final status';
+            return $this->outputWithLogger($method, $logs, $logs['error']['message']);
         }
 
+        return $this->outputWithLogger($method, $logs, 'FINISH', self::HEADER_OK);
     }
 
-    private function outputWithLogger($method, &$logs, $header = self::HEADER_BAD_REQUEST)
+    private function outputWithLogger($method, &$logs, $message, $header = self::HEADER_BAD_REQUEST)
     {
+        $response = array('message' => $message);
         $this->load->model('payment/rbkmoney_payment');
         $this->model_payment_rbkmoney_payment->logger($method, $logs);
-        $this->response->setOutput(header($header));
-        exit();
+        $this->response->addHeader($header);
+        $this->response->setOutput(json_encode($response));
     }
 
 }

@@ -7,13 +7,11 @@ $_['text_edit'] = 'Edit RBKmoney';
 // Text
 $_['text_payment'] = 'Payment';
 $_['text_success'] = 'Settings module updated';
-// Displays a logo and a link in the list of payment modules
 $_['text_rbkmoney_payment'] = '<a href="https://rbk.money" onclick="return !window.open(this.href)"> <img src = "view/image/payment/rbkmoney_payment.png" alt="RBKmoney" title="RBKmoney" style="border: 1px solid #EEEEEE;" /> </a>';
 
 $_['text_yes'] = 'Yes';
 $_['text_no'] = 'No';
 $_['entry_logs'] = 'Enable logs';
-
 
 // Common settings
 $_['entry_status'] = 'Status:';
@@ -25,6 +23,16 @@ $_['help_sort_order'] = 'Sort order';
 $_['entry_geo_zone'] = 'Geographical area';
 $_['help_geo_zone'] = 'Geographical area';
 
+// Tab
+$_['tab_general'] = 'Required Settings';
+$_['tab_custom'] = 'Customizing the form of payment';
+$_['tab_additional'] = 'Advanced settings';
+$_['tab_docs'] = 'Documentation';
+
+// Docs
+$_['docs_integration'] = 'Integration documentation';
+$_['docs_webhook'] = 'Documentation for working with webhooks';
+$_['docs_custom'] = 'Documentation on customization of the payment form';
 
 // RBKmoney settings
 $_['entry_shop_id'] = 'Shop ID:';
@@ -40,8 +48,17 @@ $_['help_order_status_progress'] = 'Order Status after invoicing.';
 $_['entry_form_path_logo'] = 'Logo in payment form:';
 $_['help_form_path_logo'] = 'Your logo for payment form';
 
+$_['entry_form_css_button'] = 'CSS button in payment form:';
+$_['help_form_css_button'] = 'Your style button for payment form';
+
 $_['entry_form_company_name'] = 'Company name in payment form:';
 $_['help_form_company_name'] = 'Your company name for payment form';
+
+$_['entry_form_button_label'] = 'Button label in payment form:';
+$_['help_form_button_label'] = 'Your button label for payment form';
+
+$_['entry_form_description'] = 'Description in payment form:';
+$_['help_form_description'] = 'Your description for payment form';
 
 $_['entry_private_key'] = 'Private key:';
 $_['help_private_key'] = 'The private key in the system RBK Money.';
