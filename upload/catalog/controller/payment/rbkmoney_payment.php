@@ -52,13 +52,13 @@ class ControllerPaymentRbkmoneyPayment extends Controller
         $order_info = $this->model_checkout_order->getOrder($this->session->data['order_id']);
         $data['order_id'] = $this->session->data['order_id'];
 
-        $invoiceId = '';
-        $invoice_access_token = '';
+        $response = array();
+        $data['invoice_id'] = "";
+        $data['invoice_access_token'] = "";
 
         try {
-            $invoiceId = $this->model_payment_rbkmoney_payment->createInvoice($order_info);
-            $invoice_access_token = $this->model_payment_rbkmoney_payment->createAccessToken($invoiceId);
-
+            $responseCreateInvoice = $this->model_payment_rbkmoney_payment->createInvoice($order_info);
+            $response = json_decode($responseCreateInvoice['body'], true);
             $this->model_checkout_order->addOrderHistory(
                 $this->session->data['order_id'],
                 $this->config->get('rbkmoney_payment_order_status_progress_id')
@@ -70,8 +70,10 @@ class ControllerPaymentRbkmoneyPayment extends Controller
             $this->model_payment_rbkmoney_payment->logger('exception', $logs);
         }
 
-        $data['invoice_id'] = $invoiceId;
-        $data['invoice_access_token'] = $invoice_access_token;
+        if(isset($response["invoice"])) {
+            $data['invoice_id'] = $response["invoice"]["id"];
+            $data['invoice_access_token'] = $response["invoiceAccessToken"]["payload"];
+        }
 
         return $this->load->view('payment/rbkmoney_payment', $data);
     }
@@ -113,7 +115,7 @@ class ControllerPaymentRbkmoneyPayment extends Controller
         }
 
         $signature = $this->model_payment_rbkmoney_payment->urlSafeB64decode($params_signature[static::SIGNATURE_DIGEST]);
-        $public_key = $this->config->get('rbkmoney_payment_callback_public_key');
+        $public_key = '-----BEGIN PUBLIC KEY-----' . PHP_EOL . $this->config->get('rbkmoney_payment_callback_public_key') . PHP_EOL . '-----END PUBLIC KEY-----';
         if (!$this->model_payment_rbkmoney_payment->verificationSignature($content, $signature, $public_key)) {
             $logs['error']['message'] = 'Webhook notification signature mismatch';
             return $this->outputWithLogger($method, $logs, $logs['error']['message']);

@@ -48,7 +48,8 @@ class ModelPaymentRbkmoneyPayment extends Model
         return $method_data;
     }
 
-    private function getHeaders() {
+    private function getHeaders()
+    {
         $headers = array();
         $headers[] = 'X-Request-ID: ' . uniqid();
         $headers[] = 'Authorization: Bearer ' . $this->config->get('rbkmoney_payment_private_key');
@@ -60,21 +61,106 @@ class ModelPaymentRbkmoneyPayment extends Model
     public function createInvoice(array $order_info)
     {
         $data = [
-            'shopID' => (int)$this->config->get('rbkmoney_payment_shop_id'),
+            'shopID' => $this->config->get('rbkmoney_payment_shop_id'),
             'amount' => $this->prepareAmount($order_info['total']),
             'metadata' => $this->prepareMetadata($order_info['order_id']),
             'dueDate' => $this->prepareDueDate(),
             'currency' => $order_info['currency_code'],
             'product' => $order_info['order_id'],
+            'cart' => $this->prepareCart(),
             'description' => $this->getProductDescription(),
         ];
 
         $url = $this->prepareApiUrl('processing/invoices');
         $headers = $this->getHeaders();
-        $response = $this->send($url, 'POST', $headers, json_encode($data, true), 'init_invoice');
-        $invoice_encode = json_decode($response['body'], true);
+        return $this->send($url, 'POST', $headers, json_encode($data, true), 'init_invoice');
+    }
 
-        return (!empty($invoice_encode['id'])) ? $invoice_encode['id'] : '';
+    private function prepareCart()
+    {
+        $lines = [];
+        foreach ($this->cart->getProducts() as $product) {
+            $item = [];
+            $item['product'] = $product['name'];
+            $item['quantity'] = (int)$product['quantity'];
+
+            $tax = $this->tax->calculate($product['price'] * $product['quantity'], $product['tax_class_id'], $this->config->get('config_tax'));
+
+            $price = round($tax, 2, PHP_ROUND_HALF_UP);
+            $item['price'] = $this->prepareAmount($price);
+
+            $tax_rates = $this->tax->getRates($product['price'], $product['tax_class_id']);
+            if (!empty($tax_rates)) {
+
+                foreach ($tax_rates as $rate) {
+                    $rate = $this->getRate($rate['rate']);
+                    if ($rate != null) {
+                        $taxMode = [
+                            'type' => 'InvoiceLineTaxVAT',
+                            'rate' => $rate,
+                        ];
+                        $item['taxMode'] = $taxMode;
+                    }
+                }
+
+
+            }
+            $lines[] = $item;
+        }
+
+        $shippingMethod = $this->session->data['shipping_method'];
+        if (!empty($shippingMethod)) {
+
+            if (isset($shippingMethod['cost'])) {
+                $item = [];
+                $item['product'] = $shippingMethod['title'];
+                $item['quantity'] = 1;
+
+                $tax = $this->tax->calculate($shippingMethod['cost'] * $item['quantity'], $shippingMethod['tax_class_id'], $this->config->get('config_tax'));
+                $price = round($tax, 2, PHP_ROUND_HALF_UP);
+                $item['price'] = $this->prepareAmount($price);
+
+                // Shipping always 18%
+                $taxMode = [
+                    'type' => 'InvoiceLineTaxVAT',
+                    'rate' => "18%",
+                ];
+                $item['taxMode'] = $taxMode;
+
+                $lines[] = $item;
+            }
+        }
+
+        return $lines;
+    }
+
+    private function getRate($rate)
+    {
+        switch ($rate) {
+            case '0':
+            case '0.0000':
+                return '0%';
+                break;
+            case '10':
+            case '10.0000':
+                return '10%';
+                break;
+            case '18':
+            case '18.0000':
+                return '18%';
+                break;
+            case '10/100':
+                return '10/110';
+                break;
+            case '18/118':
+                return '18/118';
+                break;
+            case '20':
+            case '20.0000':
+            default:
+                return null;
+                break;
+        }
     }
 
     private function getProductDescription()
@@ -98,23 +184,6 @@ class ModelPaymentRbkmoneyPayment extends Model
         return $products;
     }
 
-    public function createAccessToken($invoice_id)
-    {
-        if (empty($invoice_id)) {
-            throw new Exception('Не передан обязательный параметр invoice_id');
-        }
-
-        $url = $this->prepareApiUrl('processing/invoices/' . $invoice_id . '/access_tokens');
-        $headers = $this->getHeaders();
-        $response = $this->send($url, 'POST', $headers, '', 'access_tokens');
-        if ($response['http_code'] != 201) {
-            throw new Exception('Возникла ошибка при создании токена для инвойса');
-        }
-        $response_decode = json_decode($response['body'], true);
-        $access_token = !empty($response_decode['payload']) ? $response_decode['payload'] : '';
-        return $access_token;
-    }
-
     private function send($url, $method, $headers = [], $data = '', $type = '')
     {
         $logs = array(
@@ -128,7 +197,7 @@ class ModelPaymentRbkmoneyPayment extends Model
         $this->logger($type . ': request', $logs);
 
         if (empty($url)) {
-            throw new Exception('Не передан обязательный параметр url');
+            throw new Exception('Required url parameter not passed');
         }
 
         $curl = curl_init($url);
