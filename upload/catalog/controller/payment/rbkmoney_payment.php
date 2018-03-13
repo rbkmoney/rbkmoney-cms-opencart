@@ -115,7 +115,7 @@ class ControllerPaymentRbkmoneyPayment extends Controller
         }
 
         $signature = $this->model_payment_rbkmoney_payment->urlSafeB64decode($params_signature[static::SIGNATURE_DIGEST]);
-        $public_key = '-----BEGIN PUBLIC KEY-----' . PHP_EOL . $this->config->get('rbkmoney_payment_callback_public_key') . PHP_EOL . '-----END PUBLIC KEY-----';
+        $public_key = trim($this->config->get('rbkmoney_payment_callback_public_key'));
         if (!$this->model_payment_rbkmoney_payment->verificationSignature($content, $signature, $public_key)) {
             $logs['error']['message'] = 'Webhook notification signature mismatch';
             return $this->outputWithLogger($method, $logs, $logs['error']['message']);
