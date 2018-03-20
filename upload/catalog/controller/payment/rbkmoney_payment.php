@@ -131,7 +131,7 @@ class ControllerPaymentRbkmoneyPayment extends Controller
             }
         }
 
-        $current_shop_id = (int)$this->config->get('rbkmoney_payment_shop_id');
+        $current_shop_id = $this->config->get('rbkmoney_payment_shop_id');
         if ($data[static::INVOICE][static::INVOICE_SHOP_ID] != $current_shop_id) {
             $logs['error']['message'] = static::INVOICE_SHOP_ID . ' is missing';
             return $this->outputWithLogger($method, $logs, $logs['error']['message']);

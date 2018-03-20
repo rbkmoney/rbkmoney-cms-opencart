@@ -155,8 +155,6 @@ class ModelPaymentRbkmoneyPayment extends Model
             case '18/118':
                 return '18/118';
                 break;
-            case '20':
-            case '20.0000':
             default:
                 return null;
                 break;
