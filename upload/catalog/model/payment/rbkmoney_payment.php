@@ -8,15 +8,13 @@ class ModelPaymentRbkmoneyPayment extends Model
     const CREATE_INVOICE_TEMPLATE_DUE_DATE = 'Y-m-d\TH:i:s\Z';
     const CREATE_INVOICE_DUE_DATE = '+1 days';
 
+    const SIGNATURE = 'HTTP_CONTENT_SIGNATURE';
+    const SIGNATURE_ALG = 'alg';
+    const SIGNATURE_DIGEST = 'digest';
+    const SIGNATURE_PATTERN = "|alg=(\S+);\sdigest=(.*)|i";
+
     private $api_url = 'https://api.rbk.money/v1/';
 
-    /**
-     * Get payment method
-     *
-     * @param $address
-     * @param $total
-     * @return array
-     */
     public function getMethod($address, $total)
     {
         $this->load->language('payment/rbkmoney');
@@ -50,35 +48,8 @@ class ModelPaymentRbkmoneyPayment extends Model
         return $method_data;
     }
 
-    /**
-     * Create a new invoice.
-     *
-     * @param array $order_info
-     * @return mixed
-     */
-    public function createInvoice(array $order_info)
+    private function getHeaders()
     {
-        $headers = $this->getHeaders();
-
-        $data = [
-            'shopID' => (int)$this->config->get('rbkmoney_payment_shop_id'),
-            'amount' => $this->prepareAmount($order_info['total']),
-            'metadata' => $this->prepareMetadata($order_info['order_id']),
-            'dueDate' => $this->prepareDueDate(),
-            'currency' => strtoupper($order_info['currency_code']),
-            'product' => $order_info['order_id'],
-            'description' => $this->getProductDescription(),
-        ];
-
-        $url = $this->prepareApiUrl('processing/invoices');
-
-        $response = $this->send($url, 'POST', $headers, json_encode($data, true), 'init_invoice');
-        $invoice_encode = json_decode($response['body'], true);
-
-        return (!empty($invoice_encode['id'])) ? $invoice_encode['id'] : '';
-    }
-
-    private function getHeaders() {
         $headers = array();
         $headers[] = 'X-Request-ID: ' . uniqid();
         $headers[] = 'Authorization: Bearer ' . $this->config->get('rbkmoney_payment_private_key');
@@ -87,11 +58,109 @@ class ModelPaymentRbkmoneyPayment extends Model
         return $headers;
     }
 
-    /**
-     * Get product descriptions from the shopping cart
-     *
-     * @return string
-     */
+    public function createInvoice(array $order_info)
+    {
+        $data = [
+            'shopID' => $this->config->get('rbkmoney_payment_shop_id'),
+            'amount' => $this->prepareAmount($order_info['total']),
+            'metadata' => $this->prepareMetadata($order_info['order_id']),
+            'dueDate' => $this->prepareDueDate(),
+            'currency' => $order_info['currency_code'],
+            'product' => $order_info['order_id'],
+            'cart' => $this->prepareCart(),
+            'description' => $this->getProductDescription(),
+        ];
+
+        $url = $this->prepareApiUrl('processing/invoices');
+        $headers = $this->getHeaders();
+        return $this->send($url, 'POST', $headers, json_encode($data, true), 'init_invoice');
+    }
+
+    private function prepareCart()
+    {
+        $lines = [];
+        foreach ($this->cart->getProducts() as $product) {
+            $item = [];
+            $item['product'] = $product['name'];
+            $item['quantity'] = (int)$product['quantity'];
+
+            $tax = $this->tax->calculate($product['price'] * $product['quantity'], $product['tax_class_id'], $this->config->get('config_tax'));
+
+            $price = round($tax, 2, PHP_ROUND_HALF_UP);
+            $item['price'] = $this->prepareAmount($price);
+
+            $tax_rates = $this->tax->getRates($product['price'], $product['tax_class_id']);
+            if (!empty($tax_rates)) {
+
+                foreach ($tax_rates as $rate) {
+                    $rate = $this->getRate($rate['rate']);
+                    if ($rate != null) {
+                        $taxMode = [
+                            'type' => 'InvoiceLineTaxVAT',
+                            'rate' => $rate,
+                        ];
+                        $item['taxMode'] = $taxMode;
+                    }
+                }
+
+
+            }
+            $lines[] = $item;
+        }
+
+        $shippingMethod = $this->session->data['shipping_method'];
+        if (!empty($shippingMethod)) {
+
+            if (isset($shippingMethod['cost'])) {
+                $item = [];
+                $item['product'] = $shippingMethod['title'];
+                $item['quantity'] = 1;
+
+                $tax = $this->tax->calculate($shippingMethod['cost'] * $item['quantity'], $shippingMethod['tax_class_id'], $this->config->get('config_tax'));
+                $price = round($tax, 2, PHP_ROUND_HALF_UP);
+                $item['price'] = $this->prepareAmount($price);
+
+                // Shipping always 18%
+                $taxMode = [
+                    'type' => 'InvoiceLineTaxVAT',
+                    'rate' => "18%",
+                ];
+                $item['taxMode'] = $taxMode;
+
+                $lines[] = $item;
+            }
+        }
+
+        return $lines;
+    }
+
+    private function getRate($rate)
+    {
+        switch ($rate) {
+            case '0':
+            case '0.0000':
+                return '0%';
+                break;
+            case '10':
+            case '10.0000':
+                return '10%';
+                break;
+            case '18':
+            case '18.0000':
+                return '18%';
+                break;
+            case '10/100':
+                return '10/110';
+                break;
+            case '18/118':
+                return '18/118';
+                break;
+            default:
+                return null;
+                break;
+        }
+    }
+
     private function getProductDescription()
     {
         $products = '';
@@ -113,42 +182,6 @@ class ModelPaymentRbkmoneyPayment extends Model
         return $products;
     }
 
-    /**
-     * Create a new token to access the specified invoice.
-     *
-     * @param $invoice_id
-     * @return string
-     * @throws Exception
-     */
-    public function createAccessToken($invoice_id)
-    {
-        if (empty($invoice_id)) {
-            throw new Exception('Не передан обязательный параметр invoice_id');
-        }
-        $headers = $this->getHeaders();
-
-        $url = $this->prepareApiUrl('processing/invoices/' . $invoice_id . '/access_tokens');
-
-        $response = $this->send($url, 'POST', $headers, '', 'access_tokens');
-        if ($response['http_code'] != 201) {
-            throw new Exception('Возникла ошибка при создании токена для инвойса');
-        }
-        $response_decode = json_decode($response['body'], true);
-        $access_token = !empty($response_decode['payload']) ? $response_decode['payload'] : '';
-        return $access_token;
-    }
-
-    /**
-     * Send request
-     *
-     * @param $url
-     * @param $method
-     * @param array $headers
-     * @param string $data
-     * @param string $type
-     * @return mixed
-     * @throws Exception
-     */
     private function send($url, $method, $headers = [], $data = '', $type = '')
     {
         $logs = array(
@@ -162,13 +195,7 @@ class ModelPaymentRbkmoneyPayment extends Model
         $this->logger($type . ': request', $logs);
 
         if (empty($url)) {
-            throw new Exception('Не передан обязательный параметр url');
-        }
-
-        $allowed_methods = ['POST'];
-        if (!in_array($method, $allowed_methods)) {
-            $this->logger(__CLASS__, $logs);
-            throw new Exception('Unsupported method ' . $method);
+            throw new Exception('Required url parameter not passed');
         }
 
         $curl = curl_init($url);
@@ -229,18 +256,11 @@ class ModelPaymentRbkmoneyPayment extends Model
      * @param $amount int
      * @return int
      */
-    private function prepareAmount($amount)
+    public function prepareAmount($amount)
     {
         return number_format($amount, 2, '.', '') * 100;
     }
 
-    /**
-     * Prepare API URL
-     *
-     * @param string $path
-     * @param array $query_params
-     * @return string
-     */
     private function prepareApiUrl($path = '', $query_params = [])
     {
         $url = rtrim($this->api_url, '/') . '/' . $path;
@@ -250,14 +270,31 @@ class ModelPaymentRbkmoneyPayment extends Model
         return $url;
     }
 
-    /**
-     * Verification signature
-     *
-     * @param $data
-     * @param $signature
-     * @param $public_key
-     * @return bool
-     */
+    public function urlSafeB64decode($string)
+    {
+        $data = str_replace(array('-', '_'), array('+', '/'), $string);
+        $mod4 = strlen($data) % 4;
+        if ($mod4) {
+            $data .= substr('====', $mod4);
+        }
+        return base64_decode($data);
+    }
+
+    public function urlSafeB64encode($string)
+    {
+        $data = base64_encode($string);
+        return str_replace(array('+', '/'), array('-', '_'), $data);
+    }
+
+    public function getParametersContentSignature($content_signature)
+    {
+        preg_match_all(static::SIGNATURE_PATTERN, $content_signature, $matches, PREG_PATTERN_ORDER);
+        $params = array();
+        $params[static::SIGNATURE_ALG] = !empty($matches[1][0]) ? $matches[1][0] : '';
+        $params[static::SIGNATURE_DIGEST] = !empty($matches[2][0]) ? $matches[2][0] : '';
+        return $params;
+    }
+
     public function verificationSignature($data, $signature, $public_key)
     {
         if (empty($data) || empty($signature) || empty($public_key)) {
@@ -268,15 +305,9 @@ class ModelPaymentRbkmoneyPayment extends Model
             return FALSE;
         }
         $verify = openssl_verify($data, $signature, $public_key_id, OPENSSL_ALGO_SHA256);
-        return ($verify == static::OPENSSL_VERIFY_SIGNATURE_IS_CORRECT);
+        return ($verify == 1);
     }
 
-    /**
-     * Data logging
-     *
-     * @param $method
-     * @param $message
-     */
     public function logger($method, $message)
     {
         if ($this->config->get('rbkmoney_payment_logs')) {

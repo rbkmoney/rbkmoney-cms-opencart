@@ -46,8 +46,17 @@ class ControllerPaymentRBKmoneyPayment extends Controller
             'entry_form_path_logo',
             'help_form_path_logo',
 
+            'entry_form_css_button',
+            'help_form_css_button',
+
             'entry_form_company_name',
             'help_form_company_name',
+
+            'entry_form_button_label',
+            'help_form_button_label',
+
+            'entry_form_description',
+            'help_form_description',
 
             'entry_private_key',
             'help_private_key',
@@ -63,6 +72,15 @@ class ControllerPaymentRBKmoneyPayment extends Controller
 
             'entry_notify_url',
             'help_notify_url',
+
+            'tab_general',
+            'tab_custom',
+            'tab_additional',
+            'tab_docs',
+
+            'docs_integration',
+            'docs_webhook',
+            'docs_custom',
         ),
         'fields' => array(
             'rbkmoney_payment_status',
@@ -72,7 +90,10 @@ class ControllerPaymentRBKmoneyPayment extends Controller
             'rbkmoney_payment_order_status_id',
             'rbkmoney_payment_order_status_progress_id',
             'rbkmoney_payment_form_path_logo',
+            'rbkmoney_payment_form_css_button',
             'rbkmoney_payment_form_company_name',
+            'rbkmoney_payment_form_button_label',
+            'rbkmoney_payment_form_description',
             'rbkmoney_payment_shop_id',
             'rbkmoney_payment_private_key',
             'rbkmoney_payment_callback_public_key',
@@ -153,7 +174,7 @@ class ControllerPaymentRBKmoneyPayment extends Controller
         }
 
         foreach ($this->settings['fields'] as $field) {
-            $data[$field] = $this->getConfigByField($field);
+            $data[$field] = trim($this->getConfigByField($field));
         }
 
         $this->load->model('localisation/order_status');
@@ -190,7 +211,7 @@ class ControllerPaymentRBKmoneyPayment extends Controller
 
     private function getNotifyUrl()
     {
-        return HTTPS_CATALOG . 'index.php?route=payment/rbkmoney_payment/notify';
+        return HTTPS_CATALOG . 'index.php?route=payment/rbkmoney_payment/callback';
     }
 
     private function getConfigByField($fieldName)
