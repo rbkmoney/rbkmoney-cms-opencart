@@ -78,13 +78,13 @@ class ModelPaymentRbkmoneyPayment extends Model
 
     private function prepareCart()
     {
-        $lines = [];
+        $lines = array();
         foreach ($this->cart->getProducts() as $product) {
-            $item = [];
+            $item = array();
             $item['product'] = $product['name'];
             $item['quantity'] = (int)$product['quantity'];
 
-            $tax = $this->tax->calculate($product['price'] * $product['quantity'], $product['tax_class_id'], $this->config->get('config_tax'));
+            $tax = $this->tax->calculate($product['price'], $product['tax_class_id'], $this->config->get('config_tax'));
 
             $price = round($tax, 2, PHP_ROUND_HALF_UP);
             $item['price'] = $this->prepareAmount($price);
@@ -108,15 +108,19 @@ class ModelPaymentRbkmoneyPayment extends Model
             $lines[] = $item;
         }
 
-        $shippingMethod = $this->session->data['shipping_method'];
+        $shippingMethod = "";
+        if (isset($this->session->data['shipping_method'])) {
+            $shippingMethod = $this->session->data['shipping_method'];
+        }
+
         if (!empty($shippingMethod)) {
 
-            if (isset($shippingMethod['cost'])) {
-                $item = [];
+            if (isset($shippingMethod['cost']) && $shippingMethod['cost'] > 0) {
+                $item = array();
                 $item['product'] = $shippingMethod['title'];
                 $item['quantity'] = 1;
 
-                $tax = $this->tax->calculate($shippingMethod['cost'] * $item['quantity'], $shippingMethod['tax_class_id'], $this->config->get('config_tax'));
+                $tax = $this->tax->calculate($shippingMethod['cost'], $shippingMethod['tax_class_id'], $this->config->get('config_tax'));
                 $price = round($tax, 2, PHP_ROUND_HALF_UP);
                 $item['price'] = $this->prepareAmount($price);
 
@@ -167,11 +171,11 @@ class ModelPaymentRbkmoneyPayment extends Model
 
         $i = 0;
         foreach ($this->cart->getProducts() as $product) {
-            if ($i == 0)
+            if ($i == 0) {
                 $products .= $product['quantity'] . ' x ' . $product['name'];
-            else
+            } else {
                 $products .= ', ' . $product['quantity'] . ' x ' . $product['name'];
-
+            }
             $i++;
         }
 
@@ -182,7 +186,7 @@ class ModelPaymentRbkmoneyPayment extends Model
         return $products;
     }
 
-    private function send($url, $method, $headers = [], $data = '', $type = '')
+    private function send($url, $method, $headers = array(), $data = '', $type = '')
     {
         $logs = array(
             'request' => array(
@@ -261,7 +265,7 @@ class ModelPaymentRbkmoneyPayment extends Model
         return number_format($amount, 2, '.', '') * 100;
     }
 
-    private function prepareApiUrl($path = '', $query_params = [])
+    private function prepareApiUrl($path = '', $query_params = array())
     {
         $url = rtrim($this->api_url, '/') . '/' . $path;
         if (!empty($query_params)) {

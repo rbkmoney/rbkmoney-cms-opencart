@@ -154,19 +154,45 @@
 
                             <!-- Payment order status -->
                             <div class="form-group">
-                                <label class="col-sm-2 control-label" for="rbkmoney_payment_order_status_id">
-                                <span data-toggle="tooltip" title="<?php echo $help_order_status; ?>">
-                                    <?php echo $entry_order_status; ?>
+                                <label class="col-sm-2 control-label" for="rbkmoney_payment_order_status_paid_id">
+                                <span data-toggle="tooltip" title="<?php echo $help_order_status_paid; ?>">
+                                    <?php echo $entry_order_status_paid; ?>
                                 </span>
                                 </label>
                                 <div class="col-sm-10">
-                                    <select name="rbkmoney_payment_order_status_id"
-                                            id="rbkmoney_payment_order_status_id"
+                                    <select name="rbkmoney_payment_order_status_paid_id"
+                                            id="rbkmoney_payment_order_status_paid_id"
                                             class="form-control">
                                         <?php foreach ($order_statuses as $order_status) { ?>
-                                        <?php if ($order_status['order_status_id'] == $rbkmoney_payment_order_status_id) { ?>
+                                        <?php if ($order_status['order_status_id'] == $rbkmoney_payment_order_status_paid_id) { ?>
                                         <option value="<?php echo $order_status['order_status_id']; ?>"
                                                 selected="selected"><?php echo $order_status['name']; ?></option>
+                                        <?php } else { ?>
+                                        <option value="<?php echo $order_status['order_status_id']; ?>">
+                                            <?php echo $order_status['name']; ?>
+                                        </option>
+                                        <?php } ?>
+                                        <?php } ?>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Payment order status cancelled -->
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label" for="rbkmoney_payment_order_status_cancelled_id">
+                                <span data-toggle="tooltip" title="<?php echo $help_order_status_cancelled; ?>">
+                                    <?php echo $entry_order_status_cancelled; ?>
+                                </span>
+                                </label>
+                                <div class="col-sm-10">
+                                    <select name="rbkmoney_payment_order_status_cancelled_id"
+                                            id="rbkmoney_payment_order_status_cancelled_id" class="form-control">
+                                        <?php foreach ($order_statuses as $order_status) { ?>
+                                        <?php if ($order_status['order_status_id'] == $rbkmoney_payment_order_status_cancelled_id) { ?>
+                                        <option value="<?php echo $order_status['order_status_id']; ?>"
+                                                selected="selected">
+                                            <?php echo $order_status['name']; ?>
+                                        </option>
                                         <?php } else { ?>
                                         <option value="<?php echo $order_status['order_status_id']; ?>">
                                             <?php echo $order_status['name']; ?>
@@ -235,23 +261,7 @@
                         <!-- TAB CUSTOM - BEGIN -->
                         <div class="tab-pane" id="tab-custom">
 
-                            <!-- Form path to logo -->
-                            <div class="form-group">
-                                <label class="col-sm-2 control-label" for="rbkmoney_form_path_logo">
-                                <span data-toggle="tooltip" title="<?php echo $help_form_path_logo; ?>">
-                                    <?php echo $entry_form_path_logo; ?>
-                                </span>
-                                </label>
-                                <div class="col-sm-10">
-                                    <input type="text" name="rbkmoney_payment_form_path_logo"
-                                           value="<?php echo $rbkmoney_payment_form_path_logo; ?>"
-                                           placeholder="<?php echo $help_form_path_logo; ?>"
-                                           id="rbkmoney_payment_form_path_logo"
-                                           class="form-control"/>
-                                </div>
-                            </div>
-
-                            <!-- Form path to logo -->
+                            <!-- Form css button -->
                             <div class="form-group required">
                                 <label class="col-sm-2 control-label" for="rbkmoney_payment_form_css_button">
                                     <?php echo $entry_form_css_button; ?>

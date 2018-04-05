@@ -37,14 +37,8 @@ class ControllerPaymentRBKmoneyPayment extends Controller
             'help_geo_zone',
 
             // Other parameters
-            'entry_order_status',
-            'help_order_status',
-
             'entry_shop_id',
             'help_shop_id',
-
-            'entry_form_path_logo',
-            'help_form_path_logo',
 
             'entry_form_css_button',
             'help_form_css_button',
@@ -70,6 +64,12 @@ class ControllerPaymentRBKmoneyPayment extends Controller
             'entry_order_status_progress',
             'help_order_status_progress',
 
+            'entry_order_status_paid',
+            'help_order_status_paid',
+
+            'entry_order_status_cancelled',
+            'help_order_status_cancelled',
+
             'entry_notify_url',
             'help_notify_url',
 
@@ -87,9 +87,9 @@ class ControllerPaymentRBKmoneyPayment extends Controller
             'rbkmoney_payment_sort_order',
             'rbkmoney_payment_geo_zone_id',
             'rbkmoney_payment_logs',
-            'rbkmoney_payment_order_status_id',
+            'rbkmoney_payment_order_status_paid_id',
             'rbkmoney_payment_order_status_progress_id',
-            'rbkmoney_payment_form_path_logo',
+            'rbkmoney_payment_order_status_cancelled_id',
             'rbkmoney_payment_form_css_button',
             'rbkmoney_payment_form_company_name',
             'rbkmoney_payment_form_button_label',
