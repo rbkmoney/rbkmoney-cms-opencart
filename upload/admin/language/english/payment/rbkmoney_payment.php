@@ -39,14 +39,14 @@ $_['entry_shop_id'] = 'Shop ID:';
 $_['help_shop_id'] = 'Number of the merchant\'s shop system RBKmoney';
 $_['error_shop_id'] = 'Shop ID is required';
 
-$_['entry_order_status'] = 'Order status after the payment';
-$_['help_order_status'] = 'Order status after the payment.';
+$_['entry_order_status_paid'] = 'Order status if payment success:';
+$_['help_order_status_paid'] = 'Order status if payment success.';
 
 $_['entry_order_status_progress'] = 'Order Status after invoicing:';
 $_['help_order_status_progress'] = 'Order Status after invoicing.';
 
-$_['entry_form_path_logo'] = 'Logo in payment form:';
-$_['help_form_path_logo'] = 'Your logo for payment form';
+$_['entry_order_status_cancelled'] 	= 'Order Status if payment failed or cancelled:';
+$_['help_order_status_cancelled'] 	= 'Order Status if payment failed or cancelled.';
 
 $_['entry_form_css_button'] = 'CSS button in payment form:';
 $_['help_form_css_button'] = 'Your style button for payment form';

@@ -12,6 +12,8 @@ class ControllerPaymentRbkmoneyPayment extends Controller
     const ORDER_ID = 'order_id';
 
     const EVENT_TYPE = 'eventType';
+    const EVENT_TYPE_INVOICE_PAID = 'InvoicePaid';
+    const EVENT_TYPE_INVOICE_CANCELLED = 'InvoiceCancelled';
 
     const INVOICE = 'invoice';
     const INVOICE_ID = 'id';
@@ -19,6 +21,12 @@ class ControllerPaymentRbkmoneyPayment extends Controller
     const INVOICE_METADATA = 'metadata';
     const INVOICE_STATUS = 'status';
     const INVOICE_AMOUNT = 'amount';
+
+    const CALLBACK_STATUS_UNPAID = 'unpaid';
+    const CALLBACK_STATUS_CANCELLED = 'cancelled';
+    const CALLBACK_STATUS_PAID = 'paid';
+    const CALLBACK_STATUS_REFUNDED = 'refunded';
+    const CALLBACK_STATUS_FULFILLED = 'fulfilled';
 
     const SIGNATURE = 'HTTP_CONTENT_SIGNATURE';
     const SIGNATURE_ALG = 'alg';
@@ -43,7 +51,6 @@ class ControllerPaymentRbkmoneyPayment extends Controller
         $data['payment_form_success_url'] = $this->url->link('checkout/success');
         $data['form_css_button'] = strip_tags($this->config->get('rbkmoney_payment_form_css_button'));
         $data['shop_id'] = $this->config->get('rbkmoney_payment_shop_id');
-        $data['form_path_logo'] = $this->config->get('rbkmoney_payment_form_path_logo');
         $data['form_company_name'] = $this->config->get('rbkmoney_payment_form_company_name');
         $data['form_button_label'] = $this->config->get('rbkmoney_payment_form_button_label');
         $data['form_description'] = $this->config->get('rbkmoney_payment_form_description');
@@ -70,12 +77,14 @@ class ControllerPaymentRbkmoneyPayment extends Controller
             $this->model_payment_rbkmoney_payment->logger('exception', $logs);
         }
 
-        if(isset($response["invoice"])) {
+        if (isset($response["invoice"])) {
             $data['invoice_id'] = $response["invoice"]["id"];
             $data['invoice_access_token'] = $response["invoiceAccessToken"]["payload"];
         }
 
         return $this->load->view('payment/rbkmoney_payment', $data);
+
+
     }
 
     /**
@@ -155,25 +164,24 @@ class ControllerPaymentRbkmoneyPayment extends Controller
         if (!empty($order_info['total'])) {
             $order_amount = (int)$this->model_payment_rbkmoney_payment->prepareAmount($order_info['total']);
             $invoice_amount = (int)$data[static::INVOICE][static::INVOICE_AMOUNT];
-            if($order_amount != $invoice_amount) {
-                $logs['error']['message'] = 'Received amount vs Order amount mismatch -' . var_dump($data[static::INVOICE][static::INVOICE_AMOUNT]);
+            if ($order_amount != $invoice_amount) {
+                $logs['order_info'] = $order_info;
+                $logs['error']['message'] = 'Received amount ' . $order_amount . ' vs Order amount mismatch ' . $data[static::INVOICE][static::INVOICE_AMOUNT];
                 return $this->outputWithLogger($method, $logs, $logs['error']['message']);
             }
         }
 
-        if ($order_info['order_status_id'] == 0) {
-            $this->model_checkout_order->addOrderHistory($order_info['order_id'], $this->config->get('rbkmoney_payment_order_status_id'), 'RBKmoney');
-            $logs['order_info'] = $order_info;
-            return $this->outputWithLogger($method, $logs, 'OK', self::HEADER_OK);
-        }
+        $allowedEventTypes = array(EVENT_TYPE_INVOICE_PAID, EVENT_TYPE_INVOICE_CANCELLED);
+        if (in_array($data[static::EVENT_TYPE], $allowedEventTypes)) {
 
-        if (($data[static::INVOICE][static::INVOICE_STATUS] == 'paid') && ($order_info['order_status_id'] != $this->config->get('rbkmoney_payment_order_status_id'))) {
-            $this->model_checkout_order->addOrderHistory($order_info['order_id'], $this->config->get('rbkmoney_payment_order_status_id'), 'RBKmoney', TRUE);
-            $logs['order_info'] = $order_info;
+            $invoiceStatus = $data[static::INVOICE][static::INVOICE_STATUS];
+            if (($invoiceStatus == static::CALLBACK_STATUS_PAID) &&  ($order_info['order_status_id'] != $this->config->get('rbkmoney_payment_order_status_paid_id'))) {
+                $this->model_checkout_order->addOrderHistory($order_info['order_id'], $this->config->get('rbkmoney_payment_order_status_paid_id'), 'RBKmoney', TRUE);
+            } elseif (($invoiceStatus == static::CALLBACK_STATUS_CANCELLED) && ($order_info['order_status_id'] != $this->config->get('rbkmoney_payment_order_status_cancelled_id'))) {
+                $this->model_checkout_order->addOrderHistory($order_info['order_id'], $this->config->get('rbkmoney_payment_order_status_cancelled_id'), 'RBKmoney', TRUE);
+            }
+
             return $this->outputWithLogger($method, $logs, 'OK', self::HEADER_OK);
-        } else {
-            $logs['error']['message'] = 'Order ' . $order_id . ' already has a final status';
-            return $this->outputWithLogger($method, $logs, $logs['error']['message']);
         }
 
         return $this->outputWithLogger($method, $logs, 'FINISH', self::HEADER_OK);

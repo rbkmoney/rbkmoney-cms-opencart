@@ -15,9 +15,6 @@
     <?php if (!empty($form_company_name)) { ?>
     data-name="<?php echo $form_company_name ?>"
     <?php } ?>
-    <?php if (!empty($form_path_logo)) { ?>
-    data-logo="<?php echo $form_path_logo ?>"
-    <?php } ?>
     <?php if (!empty($form_button_label)) { ?>
     data-label="<?php echo $form_button_label ?>"
     <?php } ?>
