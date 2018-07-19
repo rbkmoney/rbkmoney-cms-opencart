@@ -174,7 +174,7 @@ class ControllerPaymentRbkmoneyPayment extends Controller
             }
         }
 
-        $allowedEventTypes = array(EVENT_TYPE_INVOICE_PAID, EVENT_TYPE_INVOICE_CANCELLED);
+        $allowedEventTypes = array(static::EVENT_TYPE_INVOICE_PAID, static::EVENT_TYPE_INVOICE_CANCELLED);
         if (in_array($data[static::EVENT_TYPE], $allowedEventTypes)) {
 
             $invoiceStatus = $data[static::INVOICE][static::INVOICE_STATUS];
