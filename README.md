@@ -38,9 +38,7 @@ Extensions > Payments > RBKmoney нажать [Edit] и заполнить не�
 
 #### Совместимость
 
-- Opencart 2.0
-- Opencart 2.1
-- Opencart 2.2
+- Opencart 2.1.0.2
 
 В списке совместимости нет вашей версии Opencart 2.x? Напишите нам обращение - это ускорит процесс адаптации модуля под вашу систему.
 
@@ -135,9 +133,7 @@ To start accepting payments on your site you need:
 
 #### Compatibility
 
-- Opencart 2.0
-- Opencart 2.1
-- Opencart 2.2
+- Opencart 2.1.0.2
 
 Is your version of Opencart 2.x not listed in compatibility list? Write us an appeal - this will speed up the process of adapting the module to your system.
 

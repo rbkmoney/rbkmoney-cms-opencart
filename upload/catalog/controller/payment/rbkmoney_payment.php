@@ -82,8 +82,11 @@ class ControllerPaymentRbkmoneyPayment extends Controller
             $data['invoice_access_token'] = $response["invoiceAccessToken"]["payload"];
         }
 
-        return $this->load->view('payment/rbkmoney_payment', $data);
-
+        if (file_exists(DIR_TEMPLATE . $this->config->get('config_template') . '/template/payment/rbkmoney_payment.tpl')) {
+            return $this->load->view($this->config->get('config_template') . '/template/payment/rbkmoney_payment.tpl', $data);
+        } else {
+            return $this->load->view('default/template/payment/rbkmoney_payment.tpl', $data);
+        }
 
     }
 
